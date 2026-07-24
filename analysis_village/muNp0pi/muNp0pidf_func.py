@@ -301,3 +301,26 @@ def get_nuE_reco(df):
     df[('slc', 'reco', 'E', '', '', '')] = nuE_reco
 
     return df
+
+def flatten_cols(df):
+        index = df.index
+        df = df.reset_index()
+        # Join non-empty tuple parts with '_', strip leading/trailing underscores
+        df.columns = [
+            '_'.join(str(p) for p in col if str(p).strip()).strip('_')
+            if isinstance(col, tuple) else str(col)
+            for col in df.columns.to_flat_index()
+        ]
+        # Deduplicate column names if any clash after flattening
+        seen = {}
+        new_cols = []
+        for c in df.columns:
+            if c in seen:
+                seen[c] += 1
+                new_cols.append(f"{c}_{seen[c]}")
+            else:
+                seen[c] = 0
+                new_cols.append(c)
+        df.columns = new_cols
+        df.index=index
+        return df
