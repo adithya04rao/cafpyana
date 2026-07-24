@@ -182,6 +182,7 @@ trkbranches = [
     trkbranch + "chi2pid.2.pid_ndof",
     trkbranch + "chi2pid.2.chi2_muon",
     trkbranch + "chi2pid.2.chi2_proton",
+    trkbranch + "chi2pid.2.chi2_pion",
     trkbranch + "chi2pid.2.pida",
 ] + pfpbranches
 
@@ -307,6 +308,8 @@ mcbranches = [
     "rec.mc.nu.time",
     "rec.mc.nu.bjorkenX",
     "rec.mc.nu.inelasticityY",
+    "rec.mc.nu.q0_lab",
+    "rec.mc.nu.modq_lab",
     "rec.mc.nu.Q2",
     "rec.mc.nu.w",
     "rec.mc.nu.momentum.x",
@@ -858,3 +861,11 @@ spinetpart_moduleids_branches = [
 spinetpart_originchildrenid_branches = [
     spinetpart + "orig_children_id"             # Original ID of the children particles.
 ]
+
+corrections = [                                 
+    "rec.mc.nu.q0_lab",                         # Energy of the exchange propagator
+    "rec.mc.nu.inelasticityY",                  # Inelasticity
+    "rec.mc.nu.nproton",                        # Pre-fsi proton number
+    "rec.mc.nu.nneutron"                        # Pre-fsi neutron number
+]
+
