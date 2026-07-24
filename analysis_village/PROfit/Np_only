@@ -1,0 +1,46 @@
+<?xml version="1.0" ?>
+
+<!-- One mode and Single Detector Analysis -->
+<mode name="nu" />
+<detector name="SBND" pot="1e20"/>
+
+<!--Single Channel : Numu Selcetion-->
+<channel name="numu" plotname="SPINE CC #nu_{#mu} Np Selection">
+    <bins unit="Reconstructed Neutrino Energy [GeV]" edges="0.4 0.45 0.5 0.55 0.6 0.65 0.7 0.75 0.8 0.85 0.9 0.95 1.0 1.25 1.5"/>
+    <bins unit="True Neutrino Energy [GeV]" min="0" max="3" nbins="20"/>
+    <bins unit="True L/E [km/GeV]" min="0" max="3" nbins="150" plot="false"/>
+    <subchannel name="1p"       plotname="#nu_{#mu} true 1p"     color="#14bee8"/>
+    <subchannel name="Np"      plotname="#nu_{#mu} true N>1 p"  color="#1c15e5"/>
+</channel>
+
+<!-- The Physics model to fit, here numu disapearance only-->
+<model tag="numudis">
+    <rule index="0" name="No Osc"/>
+    <rule index="1" name="Numu Dis"/>
+    <parameter name="L/E" variable_index="2"/>
+</model>
+
+<!-- Where to find the Montecarlo and how to fill all the subchannels defined above-->
+<MCFile treename="SelectedEvents" filename="/home/arao/muNp0pidf_sBruce.root" scale = "1.0" pot="8.10889473828984e+19"> 
+    <friend treename="multisigmaTree"/>
+    <friend treename="multisimTree"/>
+    <branch
+        associated_subchannel = "nu_SBND_numu_1p"
+        model_rule            = "1"
+        additional_weight     = "(slc_truth_np == 1) * (slc_reco_np >= 2) * (pfp_trk_truth_p_interaction_id >= 0)"
+    >
+        <variable>slc_reco_E</variable>
+        <variable>slc_truth_E</variable>
+        <variable>slc_truth_baseline/(1000*slc_truth_E)</variable>
+    </branch>
+
+    <branch
+        associated_subchannel = "nu_SBND_numu_Np"
+        model_rule            = "1"
+        additional_weight     = "(slc_truth_np >= 2) * (slc_reco_np >= 2) * (pfp_trk_truth_p_interaction_id >= 0)"
+    >
+        <variable>slc_reco_E</variable>
+        <variable>slc_truth_E</variable>
+        <variable>slc_truth_baseline/(1000*slc_truth_E)</variable>
+    </branch>
+</MCFile>
