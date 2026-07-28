@@ -8,6 +8,7 @@ from makedf.constants import *
 from makedf import chi2pid
 from analysis_village.gump.kinematics import *
 from analysis_village.gump.gump_cuts import *
+import uproot
 
 
 def make_spine_no_cuts_df(f):
@@ -571,32 +572,45 @@ def make_gump_nudf(f, is_slc=False):
 
     # wgtdf = pd.concat([bnbsyst.bnbsyst(f, nudf.ind), geniesyst.geniesyst_sbnd(f, nudf.ind)], axis=1)
     det = loadbranches(f["recTree"], ["rec.hdr.det"]).rec.hdr.det
+    run = loadbranches(f["recTree"], ["rec.hdr.run"]).rec.hdr.run
 
     if det.empty:
         return pd.DataFrame()
 
+    print(f.file_path)
+    if 'run2' in f.file_path or 'Run2' in f.file_path:
+        RUN = 2
+    elif 'run4' in f.file_path or 'Run4' in f.file_path:
+        RUN = 4
+    elif 'SBND' in f.file_path or 'sbnd' in f.file_path:
+        RUN = 1
+
     if (1 == det.unique()):
         DETECTOR = "SBND"
+        RUN = 1
     elif (2 == det.unique()):
         DETECTOR = "ICARUS"
+        RUN = 2 if run.iloc[0] < 12960 else 4
     else:
         print("Detector unclear, check rec.hdr.det!")
 
-    is_fv = vtxfv_cut(nudf.position, DETECTOR)
+    nudf["detector"] = DETECTOR
+    nudf["Run"] = RUN
+
+    is_fv = true_fv_cut(nudf)
     is_cc = nudf.iscc
     is_nc = (nudf.iscc == 0)
     genie_mode = nudf.genie_mode
     pdg = nudf.pdg
     nmu = nudf.nmu_27MeV
-    np = nudf.np_50MeV
+    np_ = nudf.np_50MeV
     npi = nudf.npi_30MeV
     npi0 = nudf.npi0
     nn = nudf.nn_0MeV
     is_1p0pi = (nudf.nmu_27MeV == 1) & (nudf.np_50MeV == 1) & (nudf.npi_30MeV == 0) & (nudf.npi0 == 0) 
     is_numu = (nudf.pdg == 14)
     is_other_numucc = (is_numu & is_cc & (is_1p0pi == 0) & is_fv)
-    is_contained = trkfv_cut(nudf.mu.end, DETECTOR) & trkfv_cut(nudf.p.end, DETECTOR)
-    is_sig = is_fv & is_1p0pi & is_numu & is_cc & is_contained
+    is_sig = is_fv & is_1p0pi & is_numu & is_cc 
 
     nudf['nuint_categ'] = genie_mode 
 
@@ -613,7 +627,6 @@ def make_gump_nudf(f, is_slc=False):
         'del_p': true_del_p,
         'genie_mode': genie_mode, 
         'is_sig': is_sig, 
-        'is_contained': is_contained,
         'is_nc': is_nc, 
         'is_other_numucc': is_other_numucc, 
         'is_fv': is_fv, 
@@ -629,7 +642,7 @@ def make_gump_nudf(f, is_slc=False):
         'pdg': pdg,
         'nmu': nmu,
         'nn': nn,
-        'np': np,
+        'np': np_,
         'npi': npi,
         'npi0': npi0 
     })
