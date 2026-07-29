@@ -54,7 +54,7 @@ ICARUSRun4FVCuts = {
     }
 }
 
-def _fv_cut_slc(df, det, inx=10, iny=10, inzfront=10, inzback=50):
+"""def _fv_cut_slc(df, det, inx=10, iny=10, inzfront=10, inzback=50):
     if det == "SBND":
         return ((df.slc.vertex.x < SBNDFVCuts['lowYZ']['x']['max'] - inx) & (df.slc.vertex.x > SBNDFVCuts['lowYZ']['x']['min'] + inx) &\
                 (df.slc.vertex.y < SBNDFVCuts['lowYZ']['y']['max'] - iny) & (df.slc.vertex.y > SBNDFVCuts['lowYZ']['y']['min'] + iny) &\
@@ -81,13 +81,29 @@ def _fv_cut_trk(df, det, inx=10, iny=10, inzfront=10, inzback=50):
                 (df.pfp.trk.end.y < SBNDFVCuts['highYZ']['y']['max'] - iny) & (df.pfp.trk.end.y > SBNDFVCuts['highYZ']['y']['min'] + iny) &\
                 (df.pfp.trk.end.z < SBNDFVCuts['highYZ']['z']['max'] - inzback) & (df.pfp.trk.end.z > SBNDFVCuts['highYZ']['z']['min'])) &\
                 (df.pfp.trk.start.x.notna())
-                
-                
-
+    elif "ICARUS" in det:
+            FVRun2 = (((df.pfp.trk.end.x < (ICARUSRun2FVCuts['C0']['x']['max'] - inx)) & (df.pfp.trk.end.x > (ICARUSRun2FVCuts['C0']['x']['min'] + inx))) |\
+                    ((df.pfp.trk.end.x < (ICARUSRun2FVCuts['C1']['x']['max'] - inx)) & (df.pfp.trk.end.x > (ICARUSRun2FVCuts['C1']['x']['min'] + inx)))) &\
+                     (df.pfp.trk.end.y < (ICARUSRun2FVCuts['C0']['y']['max'] - iny)) & (df.pfp.trk.end.y > (ICARUSRun2FVCuts['C0']['y']['min'] + iny)) &\
+                     (df.pfp.trk.end.z < (ICARUSRun2FVCuts['C0']['z']['max'] - inzback)) & (df.pfp.trk.end.z > (ICARUSRun2FVCuts['C0']['z']['min'] + inzfront))
+            FVRun4 = (((df.pfp.trk.end.x < (ICARUSRun4FVCuts['C0']['x']['max'] - inx)) & (df.pfp.trk.end.x > (ICARUSRun4FVCuts['C0']['x']['min'] + inx))) |\
+                    ((df.pfp.trk.end.x < (ICARUSRun4FVCuts['C1']['x']['max'] - inx)) & (df.pfp.trk.end.x > (ICARUSRun4FVCuts['C1']['x']['min'] + inx)))) &\
+                     (df.pfp.trk.end.y < (ICARUSRun4FVCuts['C0']['y']['max'] - iny)) & (df.pfp.trk.end.y > (ICARUSRun4FVCuts['C0']['y']['min'] + iny)) &\
+                     (df.pfp.trk.end.z < (ICARUSRun4FVCuts['C0']['z']['max'] - inzback)) & (df.pfp.trk.end.z > (ICARUSRun4FVCuts['C0']['z']['min'] + inzfront))
+            if det == "ICARUS":
+                ret = FVRun2
+                ret[df.Run == 4] = FVRun4[df.Run == 4]
+                return ret
+            elif det == "ICARUS Run2":
+                return FVRun2
+            elif det == "ICARUS Run4":
+                return FVRun4
+            else:
+                raise NameError("DETECTOR not valid, should be SBND or ICARUS Run2 or ICARUS Run4")
     else:
-        raise NameError("DETECTOR not valid, should be SBND or ICARUS Run2 or ICARUS Run4")
+        raise NameError("DETECTOR not valid, should be SBND or ICARUS Run2 or ICARUS Run4")"""
 
-#def _fv_cut(df, det, inx=10, iny=10, inzfront=10, inzback=50):
+def _fv_cut(df, det, inx=10, iny=10, inzfront=10, inzback=50):
     if "ICARUS" in det:
         FVRun2 = (((df.x < (ICARUSRun2FVCuts['C0']['x']['max'] - inx)) & (df.x > (ICARUSRun2FVCuts['C0']['x']['min'] + inx))) |\
                 ((df.x < (ICARUSRun2FVCuts['C1']['x']['max'] - inx)) & (df.x > (ICARUSRun2FVCuts['C1']['x']['min'] + inx)))) &\
@@ -108,27 +124,37 @@ def _fv_cut_trk(df, det, inx=10, iny=10, inzfront=10, inzback=50):
         else:
             raise NameError("DETECTOR not valid, should be SBND or ICARUS Run2 or ICARUS Run4")
     elif det == "SBND":
-        return ((df.slc.vertex.x < SBNDFVCuts['lowYZ']['x']['max'] - inx) & (df.slc.vertex.x > SBNDFVCuts['lowYZ']['x']['min'] + inx) &\
-                (df.slc.vertex.y < SBNDFVCuts['lowYZ']['y']['max'] - iny) & (df.slc.vertex.y > SBNDFVCuts['lowYZ']['y']['min'] + iny) &\
-                (df.slc.vertex.z < SBNDFVCuts['lowYZ']['z']['max']) & (df.slc.vertex.z > SBNDFVCuts['lowYZ']['z']['min'] + inzfront)) |\
-               ((df.slc.vertex.x < SBNDFVCuts['highYZ']['x']['max'] - inx) & (df.slc.vertex.x > SBNDFVCuts['highYZ']['x']['min'] + inx) &\
-                (df.slc.vertex.y < SBNDFVCuts['highYZ']['y']['max'] - iny) & (df.slc.vertex.y > SBNDFVCuts['highYZ']['y']['min'] + iny) &\
-                (df.slc.vertex.z < SBNDFVCuts['highYZ']['z']['max'] - inzback) & (df.slc.vertex.z > SBNDFVCuts['highYZ']['z']['min']))
+        return ((df.x < SBNDFVCuts['lowYZ']['x']['max'] - inx) & (df.x > SBNDFVCuts['lowYZ']['x']['min'] + inx) &\
+                (df.y < SBNDFVCuts['lowYZ']['y']['max'] - iny) & (df.y > SBNDFVCuts['lowYZ']['y']['min'] + iny) &\
+                (df.z < SBNDFVCuts['lowYZ']['z']['max']) & (df.z > SBNDFVCuts['lowYZ']['z']['min'] + inzfront)) |\
+               ((df.x < SBNDFVCuts['highYZ']['x']['max'] - inx) & (df.x > SBNDFVCuts['highYZ']['x']['min'] + inx) &\
+                (df.y < SBNDFVCuts['highYZ']['y']['max'] - iny) & (df.y > SBNDFVCuts['highYZ']['y']['min'] + iny) &\
+                (df.z < SBNDFVCuts['highYZ']['z']['max'] - inzback) & (df.z > SBNDFVCuts['highYZ']['z']['min']))
 
     else:
         raise NameError("DETECTOR not valid, should be SBND or ICARUS Run2 or ICARUS Run4")
-    
+
 def slcfv_cut(df, det):
-    return _fv_cut_slc(df, det, inzback=50)
+    vtx = pd.DataFrame({
+                           'Run': df.Run,
+                           'x': df.slc.vertex.x,
+                           'y': df.slc.vertex.y,
+                           'z': df.slc.vertex.z}, index=df.index)
+    return _fv_cut(vtx, det)
 
 def trkfv_cut(df, det):
-    return _fv_cut_trk(df, det, inzback=10)
+    trk = pd.DataFrame({
+                               'Run': df.Run,
+                               'x': df.pfp.trk.end.x,
+                               'y': df.pfp.trk.end.y,
+                               'z': df.pfp.trk.end.z}, index=df.index)
+    return _fv_cut(trk, det, inzback=10)
 
 def cosmic_cut(df):
     return (df.slc.nu_score > 0.4)
 
 def crthitveto_cut(df):
-    return ~df.pfp.trk.crthit
+    return df.pfp.trk.crthit.hit.pe.isna()
 
 mode_list = [0, 10, 1, 2, 3]
 mode_labels = ['QE', 'MEC', 'RES', 'SIS/DIS', 'COH', "other"]
@@ -155,7 +181,7 @@ def all_fv_cuts(recodf, DETECTOR):
     recodf = recodf[cosmic_cut(recodf)]
 
     ### crthitveto cut
-    if DETECTOR == "ICARUS":
+    if "ICARUS" in DETECTOR:
         recodf = recodf[crthitveto_cut(recodf)]
 
     return recodf
@@ -165,15 +191,18 @@ def chi2_pid_correction(df):
     mask2 = ((df.pfp.trk.truth.p.pdg != 13) & (df.pfp.trk.truth.p.pdg != -13) & (df.pfp.trk.chi2pid.I2.chi2_muon == 0))       #non muons with chi2_muon = 0
     mask3 = ((df.pfp.trk.truth.p.pdg != 211) & (df.pfp.trk.truth.p.pdg != -211) & (df.pfp.trk.chi2pid.I2.chi2_muon == 0))     #non pions with chi2_pion = 0
 
-    df.loc[mask1, ('pfp','trk','chi2pid','I2','chi2_proton')] = -999
-    df.loc[mask2, ('pfp','trk','chi2pid','I2','chi2_muon')] = -999
-    df.loc[mask3, ('pfp','trk','chi2pid','I2','chi2_pion')] = -999
+    df.loc[mask1, ('pfp','trk','chi2pid','I2','chi2_proton','')] = -999
+    df.loc[mask2, ('pfp','trk','chi2pid','I2','chi2_muon','')] = -999
+    df.loc[mask3, ('pfp','trk','chi2pid','I2','chi2_pion','')] = -999
 
     return df
 
 def particle_classification(df, cut_m, cut_p, muon_len_cut):
     import warnings
     warnings.filterwarnings("ignore")
+
+    mask = ~df[('pfp', 'trk', 'truth', 'p', 'pdg', '')].isin([13,-13,2212])
+    df[('slc', 'truth', 'n_oth', '', '', '')] = mask.groupby(level=[0,1,2]).transform('sum')
 
     muons = ((df[('pfp', 'trk', 'chi2pid', 'I2', 'chi2_muon')] < cut_m) & (df[('pfp', 'trk', 'chi2pid', 'I2', 'chi2_proton')] > cut_p) & (df[('pfp', 'trk', 'len')] > muon_len_cut))
     protons = ((df[('pfp', 'trk', 'chi2pid', 'I2', 'chi2_muon')] > cut_m) & (df[('pfp', 'trk', 'chi2pid', 'I2', 'chi2_proton')] < cut_p))
@@ -186,16 +215,24 @@ def particle_classification(df, cut_m, cut_p, muon_len_cut):
     mask = df[('pfp', 'trk', 'particle_reco', '', '', '')] == 'proton'
     df[('slc', 'reco', 'np', '', '', '')] = mask.groupby(level=[0,1,2]).transform('sum')
 
+    mask = df[('pfp', 'trk', 'particle_reco', '', '', '')] == 'muon'
+    df[('slc', 'reco', 'nmu', '', '', '')] = mask.groupby(level=[0,1,2]).transform('sum')
+
+    mask = df[('pfp', 'trk', 'particle_reco', '', '', '')] == 'other'
+    df[('slc', 'reco', 'n_oth', '', '', '')] = mask.groupby(level=[0,1,2]).transform('sum')
+
     return df
 
+
+### Particle_classification() adds the reco particle columns. These selection codes can be applied after that
 def muNp0pi_selection(df):
-    muNp0pi = df[('pfp','trk','particle_reco', '', '', '')].groupby(level=[0,1,2]).transform(lambda x: (x.dropna().isin(['muon', 'proton']).all()) & (x.isin(['muon']).sum()==1) & (x.isin(['proton']).sum()>0))
+    muNp0pi = (df[('slc','reco','np')] >= 1) & (df[('slc','reco','nmu')] == 1) & (df[('slc','reco','n_oth')] == 0)
     muNp0pidf = df[muNp0pi]
 
     return muNp0pidf
 
 def gump_selection(df):
-    gump = df[('pfp','trk','particle_reco', '', '', '')].groupby(level=[0,1,2]).transform(lambda x: (x.dropna().isin(['muon', 'proton']).all()) & (x.isin(['muon']).sum()==1) & (x.isin(['proton']).sum()==1))
+    gump = (df[('slc','reco','np')] == 1) & (df[('slc','reco','nmu')] == 1) & (df[('slc','reco','n_oth')] == 0)
     gumpdf = df[gump]
 
     return gumpdf
