@@ -977,10 +977,10 @@ def make_muNp0pidf(f: pd.DataFrame, save_track_truth: bool=False) -> pd.DataFram
     recodf = pandora_df
     recodf[('pfp', 'trk', 'particle_reco', '', '', '')] = np.zeros(len(recodf))
 
-    recodf = multicol_add(recodf, (np.abs(recodf.pfp.trk.truth.p.pdg)==2112).groupby(level=[0,1,2]).sum().rename(('slc', 'truth', 'nn')))
-    recodf = multicol_add(recodf, (np.abs(recodf.pfp.trk.truth.p.pdg)==2212).groupby(level=[0,1,2]).sum().rename(('slc', 'truth', 'np')))
-    recodf = multicol_add(recodf, (np.abs(recodf.pfp.trk.truth.p.pdg)==13).groupby(level=[0,1,2]).sum().rename(('slc', 'truth', 'nmu')))
-    recodf = multicol_add(recodf, (np.abs(recodf.pfp.trk.truth.p.pdg)==211).groupby(level=[0,1,2]).sum().rename(('slc', 'truth', 'npi')))
+    recodf = multicol_add(recodf, (np.abs(recodf.pfp.trk.truth.p.pdg)==2112).groupby(level=[0,1]).sum().rename(('slc', 'truth', 'nn')))
+    recodf = multicol_add(recodf, (np.abs(recodf.pfp.trk.truth.p.pdg)==2212).groupby(level=[0,1]).sum().rename(('slc', 'truth', 'np')))
+    recodf = multicol_add(recodf, (np.abs(recodf.pfp.trk.truth.p.pdg)==13).groupby(level=[0,1]).sum().rename(('slc', 'truth', 'nmu')))
+    recodf = multicol_add(recodf, (np.abs(recodf.pfp.trk.truth.p.pdg)==211).groupby(level=[0,1]).sum().rename(('slc', 'truth', 'npi')))
 
     recodf = muNp0pi_pipeline(recodf, 30, 80, 25)
 
