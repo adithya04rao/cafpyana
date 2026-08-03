@@ -187,6 +187,7 @@ def all_fv_cuts(recodf, DETECTOR):
     return recodf
 
 def chi2_pid_correction(df):
+
     mask1 = ((df.pfp.trk.truth.p.pdg != 2212) & (df.pfp.trk.chi2pid.I2.chi2_proton == 0))                                     #non protons with chi2_proton = 0 
     mask2 = ((df.pfp.trk.truth.p.pdg != 13) & (df.pfp.trk.truth.p.pdg != -13) & (df.pfp.trk.chi2pid.I2.chi2_muon == 0))       #non muons with chi2_muon = 0
     mask3 = ((df.pfp.trk.truth.p.pdg != 211) & (df.pfp.trk.truth.p.pdg != -211) & (df.pfp.trk.chi2pid.I2.chi2_muon == 0))     #non pions with chi2_pion = 0
@@ -198,8 +199,11 @@ def chi2_pid_correction(df):
     return df
 
 def particle_classification(df, cut_m, cut_p, muon_len_cut):
+
     import warnings
     warnings.filterwarnings("ignore")
+
+    df = df[df.pfp.trk.start.x.notna()]
 
     mask = ~df[('pfp', 'trk', 'truth', 'p', 'pdg', '')].isin([13,-13,2212])
     df[('slc', 'truth', 'n_oth', '', '', '')] = mask.groupby(level=[0,1,2]).transform('sum')
@@ -223,15 +227,15 @@ def particle_classification(df, cut_m, cut_p, muon_len_cut):
 
     return df
 
-
-### Particle_classification() adds the reco particle columns. These selection codes can be applied after that
 def muNp0pi_selection(df):
+
     muNp0pi = (df[('slc','reco','np')] >= 1) & (df[('slc','reco','nmu')] == 1) & (df[('slc','reco','n_oth')] == 0)
     muNp0pidf = df[muNp0pi]
 
     return muNp0pidf
 
 def gump_selection(df):
+
     gump = (df[('slc','reco','np')] == 1) & (df[('slc','reco','nmu')] == 1) & (df[('slc','reco','n_oth')] == 0)
     gumpdf = df[gump]
 
@@ -340,24 +344,61 @@ def get_nuE_reco(df):
     return df
 
 def flatten_cols(df):
-        index = df.index
-        df = df.reset_index()
-        # Join non-empty tuple parts with '_', strip leading/trailing underscores
-        df.columns = [
-            '_'.join(str(p) for p in col if str(p).strip()).strip('_')
-            if isinstance(col, tuple) else str(col)
-            for col in df.columns.to_flat_index()
-        ]
-        # Deduplicate column names if any clash after flattening
-        seen = {}
-        new_cols = []
-        for c in df.columns:
-            if c in seen:
-                seen[c] += 1
-                new_cols.append(f"{c}_{seen[c]}")
-            else:
-                seen[c] = 0
-                new_cols.append(c)
-        df.columns = new_cols
-        df.index=index
-        return df
+    index = df.index
+    n = index.nlevels  # number of columns reset_index() will prepend
+
+    df = df.reset_index()
+    # Join non-empty tuple parts with '_', strip leading/trailing underscores
+    df.columns = [
+        '_'.join(str(p) for p in col if str(p).strip()).strip('_')
+        if isinstance(col, tuple) else str(col)
+        for col in df.columns.to_flat_index()
+    ]
+    # Deduplicate column names if any clash after flattening
+    seen = {}
+    new_cols = []
+    for c in df.columns:
+        if c in seen:
+            seen[c] += 1
+            new_cols.append(f"{c}_{seen[c]}")
+        else:
+            seen[c] = 0
+            new_cols.append(c)
+    df.columns = new_cols
+    df = df.drop(columns=df.columns[:n])
+    df.index = index
+    return df
+
+
+required_col_list = [
+    ('slc', 'vertex', 'x', '', '', ''),
+    ('slc', 'vertex', 'y', '', '', ''),
+    ('slc', 'vertex', 'z', '', '', ''),
+    ('slc', 'tmatch', 'eff', '', '', ''),
+    ('slc', 'tmatch', 'pur', '', '', ''),
+    ('slc', 'tmatch', 'idx', '', '', ''),
+    ('slc', 'nu_score', '', '', '', ''),
+    ('slc', 'truth', 'E', '', '', ''),
+    ('slc', 'truth', 'baseline', '', '', ''),
+    ('slc', 'truth', 'q0_lab', '', '', ''),
+    ('slc', 'truth', 'modq_lab', '', '', ''),
+    ('slc', 'truth', 'genie_mode', '', '', ''),
+    ('slc', 'truth', 'nn', '', '', ''),
+    ('slc', 'truth', 'np', '', '', ''),
+    ('slc', 'truth', 'nmu', '', '', ''),
+    ('slc', 'truth', 'npi', '', '', ''),
+    ('slc', 'reco', 'np', '', '', ''),
+    ('slc', 'reco', 'E', '', '', ''),
+    ('pfp', 'trk', 'truth', 'p', 'interaction_id', '')
+]
+
+def muNp0pi_pipeline(df, muon_pid_cut, proton_pid_cut, muon_min_len_cut):
+    df = chi2_pid_correction(df)
+    df = particle_classification(df, muon_pid_cut, proton_pid_cut, muon_min_len_cut)
+    df = muNp0pi_selection(df)
+    df = get_nuE_reco(df)
+    df = df[required_col_list]
+    df = flatten_cols(df)
+    df = df.groupby(level=[0,1,2]).first()
+
+    return df
