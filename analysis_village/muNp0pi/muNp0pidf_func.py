@@ -175,7 +175,7 @@ def all_fv_cuts(recodf, DETECTOR):
     recodf = recodf[slcfv_cut(recodf, DETECTOR)]
 
     ### Track containment cut (require that all tracks within a slice are contained)
-    recodf = recodf.loc[trkfv_cut(recodf, DETECTOR).groupby(level=[0,1,2]).transform("all")]
+    recodf = recodf.loc[trkfv_cut(recodf, DETECTOR).groupby(level=[0,1]).transform("all")]
 
     ### NuScore cut
     recodf = recodf[cosmic_cut(recodf)]
@@ -206,7 +206,7 @@ def particle_classification(df, cut_m, cut_p, muon_len_cut):
     df = df[df.pfp.trk.start.x.notna()]
 
     mask = ~df[('pfp', 'trk', 'truth', 'p', 'pdg', '')].isin([13,-13,2212])
-    df[('slc', 'truth', 'n_oth', '', '', '')] = mask.groupby(level=[0,1,2]).transform('sum')
+    df[('slc', 'truth', 'n_oth', '', '', '')] = mask.groupby(level=[0,1]).transform('sum')
 
     muons = ((df[('pfp', 'trk', 'chi2pid', 'I2', 'chi2_muon')] < cut_m) & (df[('pfp', 'trk', 'chi2pid', 'I2', 'chi2_proton')] > cut_p) & (df[('pfp', 'trk', 'len')] > muon_len_cut))
     protons = ((df[('pfp', 'trk', 'chi2pid', 'I2', 'chi2_muon')] > cut_m) & (df[('pfp', 'trk', 'chi2pid', 'I2', 'chi2_proton')] < cut_p))
@@ -217,13 +217,13 @@ def particle_classification(df, cut_m, cut_p, muon_len_cut):
     df.loc[~(muons | protons) & notnan, ('pfp', 'trk', 'particle_reco', '', '', '')] = 'other'
 
     mask = df[('pfp', 'trk', 'particle_reco', '', '', '')] == 'proton'
-    df[('slc', 'reco', 'np', '', '', '')] = mask.groupby(level=[0,1,2]).transform('sum')
+    df[('slc', 'reco', 'np', '', '', '')] = mask.groupby(level=[0,1]).transform('sum')
 
     mask = df[('pfp', 'trk', 'particle_reco', '', '', '')] == 'muon'
-    df[('slc', 'reco', 'nmu', '', '', '')] = mask.groupby(level=[0,1,2]).transform('sum')
+    df[('slc', 'reco', 'nmu', '', '', '')] = mask.groupby(level=[0,1]).transform('sum')
 
     mask = df[('pfp', 'trk', 'particle_reco', '', '', '')] == 'other'
-    df[('slc', 'reco', 'n_oth', '', '', '')] = mask.groupby(level=[0,1,2]).transform('sum')
+    df[('slc', 'reco', 'n_oth', '', '', '')] = mask.groupby(level=[0,1]).transform('sum')
 
     return df
 
@@ -261,7 +261,7 @@ def get_nuE_reco(df):
         dpT = transverse_kinematics(mu_p, mu_dir_x, mu_dir_y, mu_dir_z, p_p, p_dir_x, p_dir_y, p_dir_z)['del_Tp']
         ET = np.sqrt(dpT**2 + MASS_Ap**2) - MASS_Ap
         
-        return mu_E + (df.slc.reco.np.groupby(level=[0,1,2]).first() * (p_E - PROTON_MASS)) + ET + BE
+        return mu_E + (df.slc.reco.np.groupby(level=[0,1]).first() * (p_E - PROTON_MASS)) + ET + BE
 
     def transverse_kinematics(mu_p, mu_dir_x, mu_dir_y, mu_dir_z, p_p, p_dir_x, p_dir_y, p_dir_z):
         mu_E = mag2d(mu_p, MUON_MASS)
@@ -315,7 +315,7 @@ def get_nuE_reco(df):
                         'mu_E' : mu_E, 
                         'p_E' : p_E})
 
-    df = df.sort_index(level=[0,1,2])
+    df = df.sort_index(level=[0,1])
 
     dir_x = df.pfp.trk.dir.x
     dir_y = df.pfp.trk.dir.y
@@ -325,17 +325,17 @@ def get_nuE_reco(df):
     mu_dir_y = dir_y[df.pfp.trk.particle_reco =='muon'].to_numpy()
     mu_dir_z = dir_z[df.pfp.trk.particle_reco =='muon'].to_numpy()
 
-    p_dir_x = dir_x[df.pfp.trk.particle_reco =='proton'].groupby(level=[0,1,2]).mean().to_numpy()
-    p_dir_y = dir_y[df.pfp.trk.particle_reco =='proton'].groupby(level=[0,1,2]).mean().to_numpy()
-    p_dir_z = dir_z[df.pfp.trk.particle_reco =='proton'].groupby(level=[0,1,2]).mean().to_numpy()
+    p_dir_x = dir_x[df.pfp.trk.particle_reco =='proton'].groupby(level=[0,1]).mean().to_numpy()
+    p_dir_y = dir_y[df.pfp.trk.particle_reco =='proton'].groupby(level=[0,1]).mean().to_numpy()
+    p_dir_z = dir_z[df.pfp.trk.particle_reco =='proton'].groupby(level=[0,1]).mean().to_numpy()
 
-    #display(len(p_dir_x),len(mu_dir_x), len(muNp0pidf.groupby(level=[0,1,2])))
+    #display(len(p_dir_x),len(mu_dir_x), len(muNp0pidf.groupby(level=[0,1])))
 
-    mu_p = df.pfp.trk.rangeP.p_muon[df.pfp.trk.particle_reco =='muon'].groupby(level=[0,1,2]).mean().to_numpy()
+    mu_p = df.pfp.trk.rangeP.p_muon[df.pfp.trk.particle_reco =='muon'].groupby(level=[0,1]).mean().to_numpy()
     p_p_series = df.pfp.trk.rangeP.p_proton[df.pfp.trk.particle_reco == 'proton']
-    p_p = p_p_series.groupby(level=[0,1,2]).mean().to_numpy()
+    p_p = p_p_series.groupby(level=[0,1]).mean().to_numpy()
 
-    p_E = (np.sqrt(p_p_series**2 + PROTON_MASS**2).groupby(level=[0,1,2]).mean().to_numpy())
+    p_E = (np.sqrt(p_p_series**2 + PROTON_MASS**2).groupby(level=[0,1]).mean().to_numpy())
 
     nuE_reco = neutrino_energy(mu_p, mu_dir_x, mu_dir_y, mu_dir_z, p_p, p_E, p_dir_x, p_dir_y, p_dir_z)
 
@@ -387,7 +387,9 @@ required_col_list = [
     ('slc', 'truth', 'np', '', '', ''),
     ('slc', 'truth', 'nmu', '', '', ''),
     ('slc', 'truth', 'npi', '', '', ''),
+    ('slc', 'reco', 'nmu', '', '', ''),
     ('slc', 'reco', 'np', '', '', ''),
+    ('slc', 'reco', 'n_oth', '', '', ''),
     ('slc', 'reco', 'E', '', '', ''),
     ('pfp', 'trk', 'truth', 'p', 'interaction_id', '')
 ]
@@ -399,6 +401,6 @@ def muNp0pi_pipeline(df, muon_pid_cut, proton_pid_cut, muon_min_len_cut):
     df = get_nuE_reco(df)
     df = df[required_col_list]
     df = flatten_cols(df)
-    df = df.groupby(level=[0,1,2]).first()
+    df = df.groupby(level=[0,1]).first()
 
     return df
