@@ -11,14 +11,20 @@ from tqdm.auto import tqdm
 import pyanalib.pandas_helpers as ph
 from multiprocess import Pool
 from functools import partial
-import syst
+from analysis_village.gump import syst
 
-import gump_cuts as gc
+from analysis_village.gump import gump_cuts as gc
+#from analysis_village.gump import rwt_map as rw
+
 
 def tmatch(reco, mc):
     for c in mc.columns:
         if c in reco.columns:
-            mc.rename(columns={c:c+'_true'}, inplace=True)
+            print(f'duplicate column found! {c}, setting right col to *_true.')
+            if(isinstance(c, tuple)):
+                mc.rename(columns={c:(c[0]+'_true', '')}, inplace=True)
+            else:
+                mc.rename(columns={c:c+'_true'}, inplace=True)
 
     df = ph.multicol_merge(reco.reset_index(), mc.reset_index(),
                            left_on=[("__ntuple", ""), ("entry", ""), ("tmatch_idx", "")],
@@ -26,13 +32,23 @@ def tmatch(reco, mc):
                            how="left") # start with keeping everything...
     return df
 
-# Dataframe names
-EVT = "mcnu_%i"
-WGT = "histpotdf_%i"
-HDR = "trig_%i"
-MC  = "stub_%i"
-CRT = "hdr_%i"
+def tmatch_copy(reco, mc):
+    for c in mc.columns:
+        if c in reco.columns:
+            print(f'duplicate column found! {c}, setting right col to *_Np.')
+            if(isinstance(c, tuple)):
+                mc.rename(columns={c:(c[0]+'_Np', '')}, inplace=True)
+            else:
+                mc.rename(columns={c:c+'_Np'}, inplace=True)
 
+    df = ph.multicol_merge(reco.reset_index(), mc.reset_index(),
+                           left_on=[("__ntuple", ""), ("entry", ""), ("rec.slc..index", "")],
+                           right_on=[("__ntuple", ""), ("entry", ""), ("rec.slc..index", "")],
+                           how="left") # start with keeping everything...
+    return df
+
+# Dataframe names
+NP = "muNp_%i"
 EVT = "evt_%i"
 WGT = "wgt_%i"
 HDR = "hdr_%i"
@@ -40,55 +56,17 @@ MC  = "mcnu_%i"
 CRT = "crt_%i"
 FLASH = "flash_%i"
 
+pot_syst = {'ms3': 0.982714, 'ms2': 0.9887274, 'ms1': 0.99474195, 'cv': 1.0, 'ps1': 1.005, 'ps2': 1.01, 'ps3': 1.015}
+
 xsec_syst = [
     # CCQE
     "GENIEReWeight_SBN_v1_multisigma_VecFFCCQEshape",
     'GENIEReWeight_SBN_v1_multisigma_CoulombCCQE',
 
-    "ZExpPCAWeighter_SBNNuSyst_multisigma_MvA_ZExp_b1", 
-    "ZExpPCAWeighter_SBNNuSyst_multisigma_MvA_ZExp_b2",
-    "ZExpPCAWeighter_SBNNuSyst_multisigma_MvA_ZExp_b3",
-    "ZExpPCAWeighter_SBNNuSyst_multisigma_MvA_ZExp_b4",
-
-    'CCQETemplateReweight_SBNNuSyst_multisigma_HF_q0bin1',
-    'CCQETemplateReweight_SBNNuSyst_multisigma_HF_q0bin2',
-    'CCQETemplateReweight_SBNNuSyst_multisigma_HF_q0bin3',
-    'CCQETemplateReweight_SBNNuSyst_multisigma_HF_q0bin4',
-    'CCQETemplateReweight_SBNNuSyst_multisigma_HF_q0bin5',
-    
-    'CCQETemplateReweight_SBNNuSyst_multisigma_SF_q0bin1',
-    'CCQETemplateReweight_SBNNuSyst_multisigma_SF_q0bin2',
-    'CCQETemplateReweight_SBNNuSyst_multisigma_SF_q0bin3',
-    'CCQETemplateReweight_SBNNuSyst_multisigma_SF_q0bin4',
-    'CCQETemplateReweight_SBNNuSyst_multisigma_SF_q0bin5',
-
-    'CCQETemplateReweight_SBNNuSyst_multisigma_CRPA_q0bin1',
-    'CCQETemplateReweight_SBNNuSyst_multisigma_CRPA_q0bin2',
-    'CCQETemplateReweight_SBNNuSyst_multisigma_CRPA_q0bin3',
-    'CCQETemplateReweight_SBNNuSyst_multisigma_CRPA_q0bin4',
-    'CCQETemplateReweight_SBNNuSyst_multisigma_CRPA_q0bin5',
-    
-    'QEInterference_SBNNuSyst_multisigma_INT_QEIntf_dial_0',
-    'QEInterference_SBNNuSyst_multisigma_INT_QEIntf_dial_1',
-    'QEInterference_SBNNuSyst_multisigma_INT_QEIntf_dial_2',
-    'QEInterference_SBNNuSyst_multisigma_INT_QEIntf_dial_3',
-    'QEInterference_SBNNuSyst_multisigma_INT_QEIntf_dial_4',
-    'QEInterference_SBNNuSyst_multisigma_INT_QEIntf_dial_5',
-
     # MEC
     'GENIEReWeight_SBN_v1_multisigma_NormCCMEC',
     'GENIEReWeight_SBN_v1_multisigma_NormNCMEC',
     "GENIEReWeight_SBN_v1_multisigma_DecayAngMEC",
-    
-    'MECq0q3InterpWeighting_SuSAv2ToValenica_q0binned_MECResponse_q0bin0',
-    'MECq0q3InterpWeighting_SuSAv2ToValenica_q0binned_MECResponse_q0bin1',
-    'MECq0q3InterpWeighting_SuSAv2ToValenica_q0binned_MECResponse_q0bin2',
-    'MECq0q3InterpWeighting_SuSAv2ToValenica_q0binned_MECResponse_q0bin3',
-
-    'MECq0q3InterpWeighting_SuSAv2ToMartini_q0binned_MECResponse_q0bin0',
-    'MECq0q3InterpWeighting_SuSAv2ToMartini_q0binned_MECResponse_q0bin1',
-    'MECq0q3InterpWeighting_SuSAv2ToMartini_q0binned_MECResponse_q0bin2',
-    'MECq0q3InterpWeighting_SuSAv2ToMartini_q0binned_MECResponse_q0bin3',
 
     # RES
     "GENIEReWeight_SBN_v1_multisigma_Theta_Delta2Npi",
@@ -97,7 +75,26 @@ xsec_syst = [
     "GENIEReWeight_SBN_v1_multisigma_MaNCRES",
     "GENIEReWeight_SBN_v1_multisigma_MvCCRES",
     "GENIEReWeight_SBN_v1_multisigma_MvNCRES",
+    "GENIEReWeight_SBN_v1_multisigma_RDecBR1gamma",
+    "GENIEReWeight_SBN_v1_multisigma_RDecBR1eta",
+
     # Non-Res
+    'GENIEReWeight_SBN_v1_multisim_NonRESBGvpCC1pi',
+    'GENIEReWeight_SBN_v1_multisim_NonRESBGvpCC2pi',
+    'GENIEReWeight_SBN_v1_multisim_NonRESBGvpNC1pi',
+    'GENIEReWeight_SBN_v1_multisim_NonRESBGvpNC2pi',
+    'GENIEReWeight_SBN_v1_multisim_NonRESBGvnCC1pi',
+    'GENIEReWeight_SBN_v1_multisim_NonRESBGvnCC2pi',
+    'GENIEReWeight_SBN_v1_multisim_NonRESBGvnNC1pi',
+    'GENIEReWeight_SBN_v1_multisim_NonRESBGvnNC2pi',
+    'GENIEReWeight_SBN_v1_multisim_NonRESBGvbarpCC1pi',
+    'GENIEReWeight_SBN_v1_multisim_NonRESBGvbarpCC2pi',
+    'GENIEReWeight_SBN_v1_multisim_NonRESBGvbarpNC1pi',
+    'GENIEReWeight_SBN_v1_multisim_NonRESBGvbarpNC2pi',
+    'GENIEReWeight_SBN_v1_multisim_NonRESBGvbarnCC1pi',
+    'GENIEReWeight_SBN_v1_multisim_NonRESBGvbarnCC2pi',
+    'GENIEReWeight_SBN_v1_multisim_NonRESBGvbarnNC1pi',
+    'GENIEReWeight_SBN_v1_multisim_NonRESBGvbarnNC2pi',
 
     # DIS
     # "GENIEReWeight_SBN_v1_multisim_DISBYVariationResponse",
@@ -111,36 +108,76 @@ xsec_syst = [
     "GENIEReWeight_SBN_v1_multisigma_NormNCCOH",
 
     # FSI
-    # "GENIEReWeight_SBN_v1_multisim_FSI_pi_VariationResponse",
-    # "GENIEReWeight_SBN_v1_multisim_FSI_N_VariationResponse",
     'GENIEReWeight_SBN_v1_multisigma_MFP_pi',
     'GENIEReWeight_SBN_v1_multisigma_FrCEx_pi',
     'GENIEReWeight_SBN_v1_multisigma_FrInel_pi',
     'GENIEReWeight_SBN_v1_multisigma_FrAbs_pi',
     'GENIEReWeight_SBN_v1_multisigma_FrPiProd_pi',
-    
-    # 'GENIEReWeight_SBNNuSyst_multisigma_EDepFSI_FrG4_N',
-    # 'GENIEReWeight_SBNNuSyst_multisigma_EDepFSI_FrINCL_N',
-    'GENIEReWeight_SBNNuSyst_multisigma_EDepFSI_FrG4LoE_N',
-    'GENIEReWeight_SBNNuSyst_multisigma_EDepFSI_FrINCLLoE_N',
-    'GENIEReWeight_SBNNuSyst_multisigma_EDepFSI_FrG4M1E_N',
-    'GENIEReWeight_SBNNuSyst_multisigma_EDepFSI_FrINCLM1E_N',
-    'GENIEReWeight_SBNNuSyst_multisigma_EDepFSI_FrG4M2E_N',
-    'GENIEReWeight_SBNNuSyst_multisigma_EDepFSI_FrINCLM2E_N',
-    'GENIEReWeight_SBNNuSyst_multisigma_EDepFSI_FrG4HiE_N',
-    'GENIEReWeight_SBNNuSyst_multisigma_EDepFSI_FrINCLHiE_N',
-    'GENIEReWeight_SBNNuSyst_multisigma_EDepFSI_MFPLoE_N',
-    'GENIEReWeight_SBNNuSyst_multisigma_EDepFSI_MFPM1E_N',
-    'GENIEReWeight_SBNNuSyst_multisigma_EDepFSI_MFPM2E_N',
-    'GENIEReWeight_SBNNuSyst_multisigma_EDepFSI_MFPHiE_N',
 
     # NCEL
     'GENIEReWeight_SBN_v1_multisigma_MaNCEL',
     'GENIEReWeight_SBN_v1_multisigma_EtaNCEL',
 ]
 
+    # Systematics introduced by Ar23+
+"""CCQETemplateReweight_SBN_v3_LFGToSF_q0bin0",
+    "CCQETemplateReweight_SBN_v3_LFGToSF_q0bin1",
+    "CCQETemplateReweight_SBN_v3_LFGToSF_q0bin2",
+    "CCQETemplateReweight_SBN_v3_LFGToSF_q0bin3",
+    "CCQETemplateReweight_SBN_v3_LFGToSF_q0bin4",
+
+    "CCQETemplateReweight_SBN_v3_LFGToHF_q0bin0",
+    "CCQETemplateReweight_SBN_v3_LFGToHF_q0bin1",
+    "CCQETemplateReweight_SBN_v3_LFGToHF_q0bin2",
+    "CCQETemplateReweight_SBN_v3_LFGToHF_q0bin3",
+    "CCQETemplateReweight_SBN_v3_LFGToHF_q0bin4",
+
+    "CCQETemplateReweight_SBN_v3_HFToCRPA_q0bin0",
+    "CCQETemplateReweight_SBN_v3_HFToCRPA_q0bin1",
+    "CCQETemplateReweight_SBN_v3_HFToCRPA_q0bin2",
+    "CCQETemplateReweight_SBN_v3_HFToCRPA_q0bin3",
+    "CCQETemplateReweight_SBN_v3_HFToCRPA_q0bin4",
+
+    "QEInterference_SBN_v3_QEIntf_dial_0",
+    "QEInterference_SBN_v3_QEIntf_dial_1",
+    "QEInterference_SBN_v3_QEIntf_dial_2",
+    "QEInterference_SBN_v3_QEIntf_dial_3",
+    "QEInterference_SBN_v3_QEIntf_dial_4",
+    "QEInterference_SBN_v3_QEIntf_dial_5",
+
+    "GENIEReWeight_SBN_v3_FrG4LoE_N",
+    "GENIEReWeight_SBN_v3_FrG4M1E_N",
+    "GENIEReWeight_SBN_v3_FrG4M2E_N",
+    "GENIEReWeight_SBN_v3_FrG4HiE_N",
+    "GENIEReWeight_SBN_v3_FrINCLLoE_N",
+    "GENIEReWeight_SBN_v3_FrINCLM1E_N",
+    "GENIEReWeight_SBN_v3_FrINCLM2E_N",
+    "GENIEReWeight_SBN_v3_FrINCLHiE_N",
+    "GENIEReWeight_SBN_v3_MFPLoE_N",
+    "GENIEReWeight_SBN_v3_MFPM1E_N",
+    "GENIEReWeight_SBN_v3_MFPM2E_N",
+    "GENIEReWeight_SBN_v3_MFPHiE_N",
+
+    "ZExpPCAWeighter_SBN_v3_MvA_b1",
+    "ZExpPCAWeighter_SBN_v3_MvA_b2",
+    "ZExpPCAWeighter_SBN_v3_MvA_b3",
+    "ZExpPCAWeighter_SBN_v3_MvA_b4",
+
+    "MECq0q3InterpWeighting_SBN_v3_SuSAToVal_MECResponse_q0bin0",
+    "MECq0q3InterpWeighting_SBN_v3_SuSAToVal_MECResponse_q0bin1",
+    "MECq0q3InterpWeighting_SBN_v3_SuSAToVal_MECResponse_q0bin2",
+    "MECq0q3InterpWeighting_SBN_v3_SuSAToVal_MECResponse_q0bin3",
+    "MECq0q3InterpWeighting_SBN_v3_SuSAToMar_MECResponse_q0bin0",
+    "MECq0q3InterpWeighting_SBN_v3_SuSAToMar_MECResponse_q0bin1",
+    "MECq0q3InterpWeighting_SBN_v3_SuSAToMar_MECResponse_q0bin2",
+    "MECq0q3InterpWeighting_SBN_v3_SuSAToMar_MECResponse_q0bin3"""
+
+
+
 xsec_cv_rwgt = [
-    "ZExpPCAWeighter_SBNNuSyst_multisigma_MvA_ZExp_b1", 
+    "ZExpPCAWeighter_SBN_v3_MvA_b1",
+    "CCQEXSecCorr_SBN_v3_CCQEXSecCorr",
+    "GENIEReWeight_SBN_v3_FrKin_PiProFix_N",
 ]
 
 flux_syst = [
@@ -170,7 +207,95 @@ truthvars = {
   "true_vtx_x": ("pos_x", ""),
   "true_vtx_y": ("pos_y", ""),
   "true_vtx_z": ("pos_z", ""),
+  "true_nmu": ("nmu", ""),
+  "true_np": ("np", ""),
+  "true_nn": ("nn", ""),
+  "true_npi": ("npi", ""),
+  "true_npi0": ("npi0", ""),
 }
+
+detvar_rwt_files = [
+  '/home/arao/cafpyana/analysis_village/gump/rwt_outputs/SBND_WMXThetaXW.txt',
+  '/home/arao/cafpyana/analysis_village/gump/rwt_outputs/SBND_WMYZ.txt',
+  ['/home/arao/cafpyana/analysis_village/gump/rwt_outputs/SBND_0xSCE.txt', 'rwt_outputs/SBND_2xSCE.txt'],
+  '/home/arao/cafpyana/analysis_village/gump/rwt_outputs/ICARUSRun2_SCE.txt',
+  '/home/arao/cafpyana/analysis_village/gump/rwt_outputs/ICARUSRun4_SCE.txt',
+  '/home/arao/cafpyana/analysis_village/gump/rwt_outputs/SBND_SmeareddEdx.txt',
+  '/home/arao/cafpyana/analysis_village/gump/rwt_outputs/ICARUSRun2_SmeareddEdx.txt',
+  '/home/arao/cafpyana/analysis_village/gump/rwt_outputs/ICARUSRun2_WMXThetaXW.txt',
+  '/home/arao/cafpyana/analysis_village/gump/rwt_outputs/ICARUSRun4_SmeareddEdx.txt',
+  '/home/arao/cafpyana/analysis_village/gump/rwt_outputs/SBND_GainHi.txt',
+  '/home/arao/cafpyana/analysis_village/gump/rwt_outputs/ICARUSRun2_GainHi.txt',
+  '/home/arao/cafpyana/analysis_village/gump/rwt_outputs/ICARUSRun4_GainHi.txt',
+  '/home/arao/cafpyana/analysis_village/gump/rwt_outputs/SBND_EMBAlpha.txt',
+  '/home/arao/cafpyana/analysis_village/gump/rwt_outputs/ICARUSRun2_EMBAlpha.txt',
+  '/home/arao/cafpyana/analysis_village/gump/rwt_outputs/ICARUSRun4_EMBAlpha.txt',
+  '/home/arao/cafpyana/analysis_village/gump/rwt_outputs/SBND_EMBBeta.txt',
+  '/home/arao/cafpyana/analysis_village/gump/rwt_outputs/ICARUSRun2_EMBBeta.txt',
+  '/home/arao/cafpyana/analysis_village/gump/rwt_outputs/ICARUSRun4_EMBBeta.txt',
+  '/home/arao/cafpyana/analysis_village/gump/rwt_outputs/SBND_EMBR.txt',
+  '/home/arao/cafpyana/analysis_village/gump/rwt_outputs/ICARUSRun2_EMBR.txt',
+  '/home/arao/cafpyana/analysis_village/gump/rwt_outputs/ICARUSRun4_EMBR.txt',
+  ['/home/arao/cafpyana/analysis_village/gump/rwt_outputs/SBND_TrigEffMin.txt', 'rwt_outputs/SBND_TrigEffPls.txt'],
+  ['/home/arao/cafpyana/analysis_village/gump/rwt_outputs/ICARUSRun2_TrigEffMin.txt', 'rwt_outputs/ICARUSRun2_TrigEffPls.txt'],
+  ['/home/arao/cafpyana/analysis_village/gump/rwt_outputs/ICARUSRun4_TrigEffMin.txt', 'rwt_outputs/ICARUSRun4_TrigEffPls.txt'],
+]
+
+detvar_rwt_lbls = [
+  'WireMod_SBND_multisigma_WMXThetaXW',
+  'WireMod_SBND_multisigma_WMYZ',
+  'SCE_SBND_multisigma_SCE',
+  'SCE_ICARUSRun2_multisigma_SCE',
+  'SCE_ICARUSRun4_multisigma_SCE',
+  'SBND_PID_Smear',
+  'ICARUSRun2_PID_Smear',
+  'WireMod_ICARUSRun2_multisigma_WMXThetaXW',
+  'ICARUSRun4_PID_Smear',
+  'SBND_PID_Gain',
+  'ICARUSRun2_PID_Gain',
+  'ICARUSRun4_PID_Gain',
+  'SBND_PID_Alpha',
+  'ICARUSRun2_PID_Alpha',
+  'ICARUSRun4_PID_Alpha',
+  'SBND_PID_Beta',
+  'ICARUSRun2_PID_Beta',
+  'ICARUSRun4_PID_Beta',
+  'SBND_PID_R',
+  'ICARUSRun2_PID_R',
+  'ICARUSRun4_PID_R',
+  'SBND_TrigEff',
+  'ICARUSRun2_TrigEff',
+  'ICARUSRun4_TrigEff'
+]
+
+std_drops = ['is_clear_cosmic', 'crlongtrkdiry', 'p_len', 'mu_E', 'mu_T', 
+             'p_E', 'p_T', 'del_Tp', 'del_phi', 'has_stub',
+             'true_pcand_pdg', 'true_p_dir_x', 'true_p_dir_y', 'true_p_dir_z', 
+             'true_pcand_dir_x', 'true_pcand_dir_y', 'true_pcand_dir_z', 
+             'true_pcand_end_x', 'true_pcand_end_y', 'true_pcand_end_z',
+             'true_mucand_pdg', 'true_mu_dir_x', 'true_mu_dir_y', 
+             'true_mu_dir_z', 'true_mucand_dir_x', 'true_mucand_dir_y', 
+             'true_mucand_dir_z', 'true_mucand_end_x', 'true_mucand_end_y', 
+             'true_mucand_end_z', 'stub_l0_5cm_dedx','stub_l0_5cm_charge',
+             'stub_l1cm_dedx','stub_l1cm_charge','stub_l2cm_dedx',
+             'stub_l2cm_charge','stub_l3cm_dedx','stub_l3cm_charge',
+             'stub_l4cm_dedx','stub_l4cm_charge','prot_chi2smear5_of_prot_cand', 
+             'prot_chi2smear5_of_mu_cand', 'mu_chi2smear5_of_mu_cand', 
+             'mu_chi2smear5_of_prot_cand', 'tmatch_pur', 'tmatch_eff', 
+             'true_baseline', 'true_nu_pdg_x', 'true_nu_pdg_y',
+             'true_nmu_27MeV', 'true_np_20MeV', 'true_np_50MeV', 
+             'true_npi_30MeV', 'is_cosmic', 'flash_sumpe', 'true_mucand_p', 
+             'true_pcand_p', 'mu_true_p', 'p_true_p', 'true_mu_end_x', 
+             'true_p_end_x', 'true_mu_end_y', 'true_p_end_y', 'true_mu_end_z', 
+             'true_p_end_z','crthit', 'true_nu_E', 'p_true_pdg', 'mu_true_pdg', 
+             'mu_chi22lo_of_mu_cand', 'mu_chi22hi_of_mu_cand', 
+             'prot_chi22lo_of_mu_cand', 'prot_chi22hi_of_mu_cand',
+             'mu_chi22lo_of_prot_cand', 'mu_chi22hi_of_prot_cand', 
+             'prot_chi22lo_of_prot_cand', 'prot_chi22hi_of_prot_cand', 
+             'true_mu_p', 'true_p_p', 'pot_univ']
+
+def get_std_drops():
+    return std_drops
 
 def scale_pot(df, pot, desired_pot):
     """Scale DataFrame by desired POT."""
@@ -199,64 +324,116 @@ def _write_cache(cache_file, df, match, pot):
     with h5py.File(cache_file, "a") as cf:
         cf.attrs["pot"] = pot
 
+class FileHistogramFunction:
+    def __init__(self, filename):
+        with open(filename, 'r') as f:
+            line1 = f.readline().strip('# ').split(',')[:-1]
+            line2 = f.readline().strip('# ').split(',')[:-1]
+
+            # Extract x metadata
+            self.x_edges = np.array([float(l) for l in line1])
+            self.y_edges = np.array([float(l) for l in line2]) 
+
+        # 2. Load the actual data grid (skipping the header lines)
+        self.grid = np.loadtxt(filename, delimiter=",")
+
+    def __call__(self, x_arr, y_arr):
+        # x_arr and y_arr are now numpy arrays (e.g., df.nu_E_calo.values)
+        
+        # Use digitize to find bin indices for all points at once
+        ix = np.digitize(x_arr, self.x_edges) - 1
+        iy = np.digitize(y_arr, self.y_edges) - 1
+        
+        # Handle out-of-bounds (set to a default or clip)
+        mask = (ix >= 0) & (ix < self.grid.shape[0]) & \
+               (iy >= 0) & (iy < self.grid.shape[1])
+        
+        # Pre-fill result with 1.0 (your default)
+        result = np.ones_like(x_arr, dtype=float)
+        
+        # Apply grid values where mask is True
+        # We use indexing with arrays here
+        result[mask] = self.grid[ix[mask], iy[mask]]
+        
+        return np.nan_to_num(result, nan=1.0)
+
+def apply_map(df, map_file, col_name):
+    if isinstance(map_file, (str, bytes)):
+        map_files = [map_file]
+    else:
+        map_files = map_file
+
+    weights = [[1]*len(df)] 
+    for mf in map_files:
+        func = FileHistogramFunction(mf)
+        weights.append(func(df.nu_E_calo.values, df.del_p.values))
+    return pd.DataFrame({col_name: [[row[i] for row in weights] for i in range(len(weights[0]))]}, index=df.index)
+
 def load_one(fname, idf,
     detector=None, # One of SBND, ICARUS, ICARUS Run4
-    include_syst=True, nuniv=100, spline=False, xsec_univ=False, # systematic handling
-    reweight_aFF=False,
-    load_flashes=True, load_truth=True, load_crt=False, match_Enu=True, # load extra information
+    include_syst=True, nuniv=100, spline=False, xsec_univ=False, xsec_spline=False,# systematic handling
+    reweight_aFF=False, pot_univ=False, flux_univ=True, sep_flux_univ=False,
+    pot_spline=False, detvar_spline=False,
+    load_truth=True, load_crt=False, match_Enu=True, # load extra information
     offbeampot=False, # POT handling
     preselection=None, # apply preselection cut
     cache_dir=None, # directory to cache output; None disables caching
-    flashname=FLASH, hdrname=HDR, evtname=EVT, wgtname=WGT, mcname=MC, crtname=CRT): # override default table names
+    flashname=FLASH, hdrname=HDR, npname=NP, evtname=EVT, wgtname=WGT, mcname=MC, crtname=CRT, drops=None, lightmem=False): # override default table names
 
     assert(detector == "SBND" or detector == "ICARUS Run2" or detector == "ICARUS Run4")
 
     # Check cache
     if cache_dir is not None:
         cache_hash = _cache_key(fname, idf, detector=detector, include_syst=include_syst,
-            nuniv=nuniv, spline=spline, xsec_univ=xsec_univ, reweight_aFF=reweight_aFF,
-            load_flashes=load_flashes, load_truth=load_truth, load_crt=load_crt,
+            nuniv=nuniv, spline=spline, xsec_univ=xsec_univ, xsec_spline=xsec_spline, reweight_aFF=reweight_aFF, pot_univ=pot_univ,
+            load_truth=load_truth, load_crt=load_crt,
             match_Enu=match_Enu, offbeampot=offbeampot, preselection=preselection)
         cache_file = os.path.join(cache_dir, cache_hash + ".h5")
         if os.path.exists(cache_file):
-            df = pd.read_hdf(cache_file, "df")
-            match = pd.read_hdf(cache_file, "match")
+            try:
+                df = pd.read_hdf(cache_file, "df")
+                match = pd.read_hdf(cache_file, "match")
+            except Exception as err:
+                print(fname, cache_file)
+                raise err 
             with h5py.File(cache_file, "r") as cf:
                 pot = float(cf.attrs["pot"])
             return df, match, pot
 
     df =  pd.read_hdf(fname, evtname % idf)
     hdr = pd.read_hdf(fname, hdrname % idf)
-
     ismc = hdr.ismc.iloc[0] == 1
 
     # set run 
     if "SBND" in fname:
         df["Run"] = 1
+        Run = 1
+        det = "SBND"
     elif "ICARUS" in fname and "Run4" in fname:
         df["Run"] = 4
+        Run = 4
+        det = "ICARUS Run4"
     elif "ICARUS" in fname:
         df["Run"] = 2
+        Run = 2
+        det = "ICARUS Run2"
     else: assert(False)
 
-    # LOAD FLASHES
-    if load_flashes:
-        if "flash_maxpe" in df.columns:
-          del df["flash_maxpe"]
+    # apply the scaled pe flash
+    if ismc: # Scale PE for MC-only
+        # Best-fit MC PE scale factors from the data/MC fits in FlashMCDataComparison.ipynb
+        if detector == "SBND": pe_scale = 0.642
+        elif detector == "ICARUS Run2": pe_scale = 0.632
+        elif detector == "ICARUS Run4": pe_scale = 0.358
+    else:
+        pe_scale = 1.0
 
-        flashes = pd.read_hdf(fname, flashname % idf)
-
-        time_name = "firsttime" if detector == "SBND" else "time"
-        if ismc: # Scale PE for MC-only
-            if detector == "SBND": pe_scale = 0.66
-            elif detector == "ICARUS Run2": pe_scale = 0.6
-            elif detector == "ICARUS Run4": pe_scale = 0.4
-        else:
-            pe_scale = 1.0
-
-        intime = (flashes[time_name] > -5) & (flashes[time_name] < 5)
-        maxpe = (flashes.totalpe*intime).groupby(level=[0, 1]).max().rename("flash_maxpe")*pe_scale
-        df = df.join(maxpe)
+    if "ICARUS" in detector:
+        df["flash_maxpe"] = df["flash_maxpe_cryo0"] * pe_scale
+        df.loc[df.slc_vtx_x > 0, "flash_maxpe"] = df["flash_maxpe_cryo1"] * pe_scale
+    else:
+        df["flash_maxpe"] = df["flash_maxpe"] * pe_scale
+    df["flash_maxpe"] = df["flash_maxpe"].fillna(0.).astype(float)
 
     # Apply preselection
     if preselection is not None:
@@ -272,30 +449,55 @@ def load_one(fname, idf,
 
         # Add in other meta-data to match.
         vtx = pd.DataFrame({
+          "detector": detector,
+          "Run": Run,
           "x": mcdf.pos_x,
           "y": mcdf.pos_y,
           "z": mcdf.pos_z,
         })
-        any_in_AV = gc._fv_cut(vtx, detector, 0, 0, 0, 0).groupby(level=[0,1]).any().rename("AVnu")
+        any_in_AV = gc._fv_cut(vtx, 0, 0, 0, 0).groupby(level=[0,1]).any().rename("AVnu")
         match = match.merge(any_in_AV, on=["__ntuple", "entry"], how="left")
 
+    old_index = df.index
     df = df.merge(match, on=["__ntuple", "entry"], how="left")
+    df = df.set_index(old_index)
 
-    match = match.set_index(match_ind, append=True).droplevel([0,1]).sort_index()
+    # DROP DUPLICATED EVENTS
+    # A "duplicate" is the same physical event appearing in more than one
+    # (__ntuple, entry) row of the header — i.e. the same event reconstructed twice.
+    # SBND MC legitimately reuses (run, evt) across distinct MC events, so when
+    # match_Enu is True we include nu_E0 in the dedup key as a tie-breaker.
+    # Drop ALL occurrences (keep=False), not just the extras, from both match and df.
+    # Use a MultiIndex.isin mask on df rather than df.merge, so df's existing
+    # MultiIndex (__ntuple, entry, rec.slc..index) is preserved.
+    dedup_cols = ["run", "evt", "nu_E0"] if match_Enu else ["run", "evt"]
+    dup_mask_match = match.duplicated(subset=dedup_cols, keep=False)
+    n_dup_pairs = int(match.loc[dup_mask_match, dedup_cols].drop_duplicates().shape[0])
+    n_dup_rows  = int(dup_mask_match.sum())
+    if n_dup_rows > 0:
+        bad_pairs = pd.MultiIndex.from_frame(
+            match.loc[dup_mask_match, dedup_cols].drop_duplicates())
+        df_pairs = pd.MultiIndex.from_arrays([df[c] for c in dedup_cols])
+        df = df[~df_pairs.isin(bad_pairs)]
+        match = match[~dup_mask_match]
+    print(f"[{os.path.basename(fname)} idf={idf}] dedup: dropped "
+          f"{n_dup_pairs} duplicated {tuple(dedup_cols)} keys ({n_dup_rows} hdr rows)")
+
+    match = match.set_index(list(match.columns), append=True).droplevel([0,1]).sort_index()
 
     # LOAD POT
     if offbeampot:
         if detector == "SBND":
             N_GATES_ON_PER_5e12POT = 1.05104
-            pot = hdr.noffbeambnb.sum()*N_GATES_ON_PER_5e12POT*5e12
+            pot = hdr.noffbeambnb.sum()/N_GATES_ON_PER_5e12POT*5e12
         elif detector == "ICARUS Run4":
             trig = pd.read_hdf(fname, "trig_%i" % idf)
             N_GATES_ON_PER_5e12POT = 1.0631936867739828
-            pot = trig.gate_delta.sum()*(1-1/20.)*N_GATES_ON_PER_5e12POT*5e12
+            pot = trig.gate_delta.sum()*(1-1/20.)/N_GATES_ON_PER_5e12POT*5e12
         elif detector == "ICARUS Run2":
             trig = pd.read_hdf(fname, "trig_%i" % idf)
             N_GATES_ON_PER_5e12POT = 1.3886218026202426
-            pot = trig.gate_delta.sum()*(1-1/20.)*N_GATES_ON_PER_5e12POT*5e12
+            pot = trig.gate_delta.sum()*(1-1/20.)/N_GATES_ON_PER_5e12POT*5e12
     else:
         pot = hdr.pot.sum()
     # LOAD TRUTH
@@ -306,26 +508,52 @@ def load_one(fname, idf,
             mc_tosave[setv] = mcdf[load]
         mcdf = pd.DataFrame(mc_tosave, mcdf.index)
         df = df.merge(mcdf, left_on=["__ntuple", "entry", "tmatch_idx"], right_index=True, how="left") 
-
+    
     # LOAD CRT
     if load_crt:
         if "crthit" in df.columns: del df["crthit"]
 
         crtdf = pd.read_hdf(fname, crtname % idf)
-        crthit = ((crt.time > -1) & (crt.time < 1.8) & (crt.plane != 50)).groupby(level=[0, 1]).any()
+        crthit = ((crtdf.time > -1) & (crtdf.time < 1.8) & (crtdf.plane != 50)).groupby(level=[0, 1]).any()
         crthit.name = "crthit"
         df = df.join(crthit, on=["__ntuple", "entry"])
+        
+    df["crthit"] = df.crthit.fillna(False).astype(bool)
+    # LOAD WEIGHTS
+    if reweight_aFF or include_syst:
+        wgt = pd.read_hdf(fname, wgtname % idf) 
+
+    df["crthit"] = df.crthit.fillna(False).astype(bool) 
 
     # LOAD AXIAL FORM FACTOR REWEIGHT
     if reweight_aFF:
-        rewgt = pd.read_hdf(fname, wgtname % idf)[xsec_cv_rwgt]
+        rewgt = wgt[xsec_cv_rwgt].copy()
         rewgt["cvwgt"] = 1.
         for w in xsec_cv_rwgt:
-            rewgt["cvwgt"] = rewgt.cvwgt * rewgt[w]["cv"]
+            cvcol = "cv" if "cv" in rewgt[w].columns else "morph"
+            rewgt["cvwgt"] = rewgt.cvwgt * rewgt[w][cvcol]
         df = df.merge(rewgt.cvwgt.rename("cvwgt"), left_on=["__ntuple", "entry", "tmatch_idx"], right_index=True, how="left")
         df.cvwgt = df.cvwgt.fillna(1.)
     else:
         df["cvwgt"] = 1.
+
+    if drops is not None:
+        df.drop(columns=drops, inplace=True, errors='ignore')
+
+    if lightmem:
+        type_map = {
+            'detector': 'category',
+            'Run': 'category',
+            'true_isfv': 'Int8',
+            'true_isothernumucc': 'Int8',
+            'true_issig': 'Int8',
+            'true_isnc': 'Int8'
+        }
+        
+        valid_type_map = {col: dtype for col, dtype in type_map.items() if col in df.columns}
+        
+        df = df.astype(valid_type_map)
+        df[df.select_dtypes(include=['float64']).columns] = df.select_dtypes(include=['float64']).astype('float32')
 
     # EARLY RETURN IF NOT LOADING WEIGHTS
     if not include_syst:
@@ -333,11 +561,73 @@ def load_one(fname, idf,
             _write_cache(cache_file, df, match, pot)
         return df, match, pot
 
-    # LOAD WEIGHTS
-    wgt = pd.read_hdf(fname, wgtname % idf) 
+    # APPLY WEIGHTS
     skim = {}
-    for i in range(min(100, nuniv)):
-        skim["flux_univ%i" % i] = np.prod([wgt[s]["univ_%i" % i] for s in flux_syst], axis=0)
+    if flux_univ:
+        num_to_process = min(100, nuniv)
+        
+        # Pre-cache the system lookups to avoid doing it inside the inner loops
+        system_data = [wgt[s] for s in flux_syst]
+        
+        new_columns_dict = {}
+        for i in range(num_to_process):
+            univ_key = "univ_%i" % i
+            # np.prod over the pre-cached systems list
+            new_columns_dict["flux_univ%i" % i] = np.prod([sys[univ_key] for sys in system_data], axis=0)
+            
+        # --- FIX HERE: Merging two dictionaries ---
+        skim.update(new_columns_dict)
+
+    #if flux_univ:
+    #    for i in range(min(100, nuniv)):
+    #        skim["flux_univ%i" % i] = np.prod([wgt[s]["univ_%i" % i] for s in flux_syst], axis=0)
+
+    if pot_univ:
+        rng = np.random.default_rng(seed=24601) # repeatable random numbers
+        rnd = np.clip(rng.normal(size=nuniv), -3, 3)
+        for i in range(nuniv):
+            wgt_vs = []
+            r = rnd[i]
+        
+            if "ps1" in pot_syst:
+                if spline:
+                    w = pot_syst
+                    spline_ = CubicSpline([-3, -2, -1, 0, 1, 2, 3], 
+                            [w["ms3"]/w["cv"], w["ms2"]/w["cv"], w["ms1"]/w["cv"], pd.Series(1, w.index), w["ps1"]/w["cv"], w["ps2"]/w["cv"], w["ps3"]/w["cv"]])
+                    s = spline_(r)
+                else:
+                    s = 1 + (pot_syst["ps1"]/pot_syst["cv"] - 1)*r
+            else:
+                assert(False)
+
+            wgt_vs.append(s)
+            
+            skim["pot_univ%i" % i] = np.prod(wgt_vs, axis=0)
+    else:
+        if "ps1" in pot_syst:
+            skim["pot_univ"] = pot_syst["ps1"]/pot_syst["cv"]
+        else:
+            assert(False)
+
+    multisim_cols = []
+    multisigma_cols = []
+    if pot_spline:
+        for d in ["SBND", "ICARUS Run2", "ICARUS Run4"]:
+            col_str = f"multisigma_{d.replace(' ', '')}_POT"
+            multisigma_cols.append(col_str)
+            if det == d:
+                skim[f"{col_str}"] = [list(pot_syst.values()) for _ in range(len(wgt))]
+            else:
+                skim[f"{col_str}"] = [[1.0]*7 for _ in range(len(wgt))]
+
+    if sep_flux_univ:
+        for j, s in enumerate(flux_syst):
+            multisim_cols.append(s)
+            w = wgt[s]#.fillna(1).replace([np.inf, -np.inf], 1)
+            if lightmem:
+                w[w.select_dtypes(include=["float64"]).columns] = w.select_dtypes(include=["float64"]).astype("float32")
+            stacked_variants = np.vstack([np.nan_to_num(w["univ_%i" % i].to_numpy(), nan=1.0, posinf=1.0, neginf=1.0) for i in range(min(100, nuniv))])
+            skim[s] = stacked_variants.T.tolist()
 
     if xsec_univ:
         rng = np.random.default_rng(seed=24601) # repeatable random numbers
@@ -364,23 +654,119 @@ def load_one(fname, idf,
                 wgt_vs.append(s)
             
             skim["xsec_univ%i" % i] = np.clip(np.prod(wgt_vs, axis=0), 0, 30).fillna(1.)
+
+    if xsec_spline:
+        for j, s in enumerate(xsec_syst):
+            if "ps1" in wgt[s]:
+                w = wgt[s].fillna(1).replace([np.inf, -np.inf], 1)
+                stacked_variants = np.vstack([
+                    np.clip((w["ms3"] / w["cv"]).to_numpy(), 0, 10),
+                    np.clip((w["ms2"] / w["cv"]).to_numpy(), 0, 10),
+                    np.clip((w["ms1"] / w["cv"]).to_numpy(), 0, 10),
+                    np.ones(len(w)),  # Central value ratio is exactly 1.0
+                    np.clip((w["ps1"] / w["cv"]).to_numpy(), 0, 10),
+                    np.clip((w["ps2"] / w["cv"]).to_numpy(), 0, 10),
+                    np.clip((w["ps3"] / w["cv"]).to_numpy(), 0, 10)
+                ])
+
+            elif "morph" in wgt[s]:
+                w = wgt[s].fillna(1).replace([np.inf, -np.inf], 1)
+                if lightmem:
+                    w[w.select_dtypes(include=["float64"]).columns] = w.select_dtypes(include=["float64"]).astype("float32")
+
+                stacked_variants = np.vstack([
+                    np.ones(len(w)),  # Central value ratio is exactly 1.0
+                    np.clip((w["morph"]).to_numpy(), 0, 10)
+                ])
+
+            if not 'multisigma' in s:
+                col_str = 'multisigma_'+s
+            else:
+                col_str = s
+            skim[col_str] = stacked_variants.T.tolist()
+            multisigma_cols.append(col_str)
+
     else:
         for i, s in enumerate(xsec_syst):
             if "ps1" in wgt[s]:
                 skim["%s_univ" % s] = np.clip(wgt[s]["ps1"]/wgt[s]["cv"], 0, 10).fillna(1.)
             elif "morph" in wgt[s]:
                 skim["%s_univ" % s] = np.clip(wgt[s]["morph"], 0, 10).fillna(1.)
+            elif "univ_0" in wgt[s]:
+                skim["%s_univ" % s] = pd.Series(1 + np.sqrt(np.mean([(1 - wgt[s][c].clip(0, 10.))**2 for c in wgt[s].columns], axis=0)), index=wgt.index).fillna(1.)
             else:
                 assert(False)
 
     skim = pd.DataFrame(skim, index=wgt.index)
 
+
     mrg = df.merge(skim,
             left_on=["__ntuple", "entry", "tmatch_idx"],
             right_index=True,
             how="left") ## -- save all sllices
-    mrg.loc[np.isnan(mrg[skim.columns[0]]), skim.columns] = 1
 
+
+    if detvar_spline:
+        for s, f in zip(detvar_rwt_lbls, detvar_rwt_files):
+            if isinstance(f, (str, bytes)):
+                fs = [f]
+            else:
+                fs = f
+            
+            allowed_substrings = ["ICARUSRun4", "ICARUSRun2", "SBND"]
+
+            if not all(any(sub in s for sub in allowed_substrings) for s in fs):
+                # Find the specific offender to make the error message helpful
+                invalid_string = next(s for s in fs if not any(sub in s for sub in allowed_substrings))
+                raise ValueError(f"Validation failed: '{invalid_string}' is invalid. Check that your reweight files are all for the same detector.")
+
+            if not 'multisigma' in s:
+                col_str = 'multisigma_' + s
+            else:
+                col_str = s
+
+            # allow for f 
+            if det.replace(' ', '') in fs[0]:
+                s_df = apply_map(mrg, fs, s)
+                mrg[col_str] = s_df
+            else:
+                mrg[col_str] = [[1.0]*(len(fs)+1) for _ in range(len(mrg))]
+
+            multisigma_cols.append(col_str)
+
+    univ_cols = [col for col in skim.columns if "univ" in col]
+    if len(multisigma_cols) > 0:
+        nan_mask = mrg[multisigma_cols[0]].isna()
+        n_missing = nan_mask.sum()
+        for col in multisigma_cols:
+            valid_rows = mrg.loc[~nan_mask, col]
+            if len(valid_rows) > 0:
+                col_len = len(valid_rows.iloc[0])
+            else:
+                col_len = 7  # Fallback to standard 7-knot default if the whole block is NaN
+            
+            # 2. Vectorized assignment: Create the block of lists all at once
+            default_val = [1.0] * col_len
+            mrg.loc[nan_mask, col] = pd.Series([default_val] * n_missing, index=mrg.index[nan_mask])
+            #mrg.loc[nan_mask, col] = mrg.loc[nan_mask, col].apply(lambda x: [1.0] * len(mrg.loc[~nan_mask, col].iloc[0]))
+
+    if len(multisim_cols) > 0:
+        nan_mask = mrg[multisim_cols[0]].isna()
+        n_missing = nan_mask.sum()
+        for col in multisim_cols:
+            valid_rows = mrg.loc[~nan_mask, col]
+            col_len = 100 
+
+            # 2. Vectorized assignment: Create the block of lists all at once
+            default_val = [1.0] * col_len
+            mrg.loc[nan_mask, col] = pd.Series([default_val] * n_missing, index=mrg.index[nan_mask])
+            #mrg.loc[nan_mask, col] = mrg.loc[nan_mask, col].apply(lambda x: [1.0] * 100)
+
+    if len(univ_cols) > 0:
+        mrg.loc[np.isnan(mrg[univ_cols[0]]), univ_cols] = 1.0 
+
+    if drops is not None:
+        mrg.drop(columns=drops, inplace=True, errors='ignore')
     if cache_dir is not None:
         _write_cache(cache_file, mrg, match, pot)
     return mrg, match, pot
@@ -401,11 +787,39 @@ def load(fname, maxdf=None, **kwargs):
         pots += pot
         dfs.append(df)
         matches.append(match)
-    df = pd.concat(dfs).reset_index(drop=True)
+    df = pd.concat(dfs).reset_index()
+    df = df.set_index(["__ntuple", "entry", "rec.slc..index"])
     match = pd.concat(matches)
 
+    # CROSS-IDF DEDUP
+    # `load_one` only sees one idf (split) at a time. The same physical event can
+    # show up in more than one idf — `__ntuple` is a per-idf ordinal, not globally
+    # unique, so the within-idf check can't catch this. Drop every occurrence of
+    # any duplicate after the concat across idfs. Match nu_E0 in the key when it's
+    # present (match_Enu=True), since SBND MC reuses (run, evt) across distinct
+    # MC events and would over-drop on (run, evt) alone.
+    dedup_levels = ["run", "evt"]
+    if "nu_E0" in match.index.names:
+        dedup_levels.append("nu_E0")
+    key = pd.MultiIndex.from_arrays([
+        match.index.get_level_values(name) for name in dedup_levels
+    ])
+    dup_mask = key.duplicated(keep=False)
+    if dup_mask.any():
+        bad_pairs = pd.MultiIndex.from_arrays([
+            key.get_level_values(i)[dup_mask] for i in range(len(dedup_levels))
+        ]).unique()
+        n_dup_pairs = len(bad_pairs)
+        n_dup_rows  = int(dup_mask.sum())
+        match = match[~dup_mask]
+        df_pairs = pd.MultiIndex.from_arrays([df[name] for name in dedup_levels])
+        df = df[~df_pairs.isin(bad_pairs)]
+        print(f"[{os.path.basename(fname)}] cross-idf dedup: dropped "
+              f"{n_dup_pairs} duplicated {tuple(dedup_levels)} keys "
+              f"({n_dup_rows} match rows)")
+
     return df, match, pots
-        
+    
 def loadl(flist, progress=True, njob=None, **kwargs):
     if njob is not None:
         pool = Pool(njob)
@@ -428,19 +842,36 @@ def loadl(flist, progress=True, njob=None, **kwargs):
         pots += pot
         dfs.append(df)
         matches.append(match)
-    df = pd.concat(dfs).reset_index(drop=True)
+    df = pd.concat(dfs, ignore_index=True)
+    del dfs
     matches = pd.concat(matches)
 
     if njob is not None:
         pool.close()
 
-    return df, matches, pots
+    ###################################
+    # ADDED BY NATE Jun 16th '26
+    # CROSS-FILE DEDUP
+    # `load` only sees one file at a time. The same physical event can
+    # show up in more than one file — `__ntuple` is a per-idf ordinal, not globally
+    # unique, so the within-file check can't catch this. Drop every occurrence of
+    # any duplicate after the concat across idfs. Match nu_E0 in the key when it's
+    # present (match_Enu=True), since SBND MC reuses (run, evt) across distinct
+    # MC events and would over-drop on (run, evt) alone.
+
+    remaining_columns = ['nu_E_calo', 'slc_vtx_x', 'slc_vtx_y', 'slc_vtx_z']
+    dup_mask = df.duplicated(subset=remaining_columns)
+    df = df[~dup_mask]
+    frac = len(df)/len(dup_mask)
+    frac = 1.0
+    print(f"dedup: dropped {len(df)} duplicated rows {frac} of the POT remaining. Before POT: {pots}, after POT {pots*frac}.")
+    ###################################
+    return df, matches, pots*frac
 
 def match_common_evts(mrgs, dfs, pots):
     common_ind = mrgs[0].index
     for m in mrgs[1:]:
         common_ind = common_ind.intersection(m.index)
-
     common_df = pd.DataFrame({"common": 1}, index=common_ind)
 
     outdfs = []
@@ -465,3 +896,6 @@ class XSecSystematic(syst.WeightSystematic):
     def __init__(self, df, scale="glob_scale"):
         super().__init__(df, ["%s_univ" % s for s in xsec_syst], avg=False, scale=scale)
 
+class POTSystematic(syst.WeightSystematic):
+    def __init__(self, df, scale="glob_scale"):
+        super().__init__(df, ["pot_univ"], avg=False, scale=scale)

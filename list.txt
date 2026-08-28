@@ -1,0 +1,10 @@
+/globus/projects/sbn/mc_MCP2025C_1e20_v10_06_00_09_prodgenie_corsika_proton_rockbox_sbnd_CV_caf_flat_caf_sbnd/62/85/caf.flat.caf-f57dbd62-b933-46f3-8a05-91a5eeb3ca9f.root
+/globus/projects/sbn/mc_MCP2025C_1e20_v10_06_00_09_prodgenie_corsika_proton_rockbox_sbnd_CV_caf_flat_caf_sbnd/62/85/caf.flat.caf-5e6c3fa3-480b-4391-a809-e87a53f9376d.root
+/globus/projects/sbn/mc_MCP2025C_1e20_v10_06_00_09_prodgenie_corsika_proton_rockbox_sbnd_CV_caf_flat_caf_sbnd/62/85/caf.flat.caf-9642c2a9-c198-4d50-a5cf-d6e90683c352.root
+/globus/projects/sbn/mc_MCP2025C_1e20_v10_06_00_09_prodgenie_corsika_proton_rockbox_sbnd_CV_caf_flat_caf_sbnd/62/85/caf.flat.caf-66226ba5-8678-4db9-b82e-365f3c4cd22d.root
+/globus/projects/sbn/mc_MCP2025C_1e20_v10_06_00_09_prodgenie_corsika_proton_rockbox_sbnd_CV_caf_flat_caf_sbnd/62/85/caf.flat.caf-a239d290-d2b3-4144-987b-d88c7f247da8.root
+/globus/projects/sbn/mc_MCP2025C_1e20_v10_06_00_09_prodgenie_corsika_proton_rockbox_sbnd_CV_caf_flat_caf_sbnd/62/be/caf.flat.caf-e9a05aeb-bb38-4fbc-af03-2c12a779da4e.root
+/globus/projects/sbn/mc_MCP2025C_1e20_v10_06_00_09_prodgenie_corsika_proton_rockbox_sbnd_CV_caf_flat_caf_sbnd/62/be/caf.flat.caf-e685fa8e-f2bf-46e5-a698-529e82980c41.root
+/globus/projects/sbn/mc_MCP2025C_1e20_v10_06_00_09_prodgenie_corsika_proton_rockbox_sbnd_CV_caf_flat_caf_sbnd/62/be/caf.flat.caf-d6b35637-b0b0-4c16-b690-43d542298288.root
+/globus/projects/sbn/mc_MCP2025C_1e20_v10_06_00_09_prodgenie_corsika_proton_rockbox_sbnd_CV_caf_flat_caf_sbnd/62/be/caf.flat.caf-351fdef4-8da0-4049-a3cc-055219ecc266.root
+/globus/projects/sbn/mc_MCP2025C_1e20_v10_06_00_09_prodgenie_corsika_proton_rockbox_sbnd_CV_caf_flat_caf_sbnd/62/be/caf.flat.caf-091cd526-a1c6-4f8d-873a-1a68e7e2d8d7.root

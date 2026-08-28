@@ -1,5 +1,122 @@
 import numpy as np
 
+def v_variation(df, setvars):
+    df = df[[c for c in df.columns if "univ" not in c]].copy()
+    
+    for (new, old) in setvars:
+        # Raise an error immediately if the 'new' column doesn't exist
+        if new not in df.columns:
+            raise KeyError(f"Column '{new}' does not exist in the DataFrame.")
+            
+        # Only overwrite rows where 'old' is NOT NaN
+        is_not_nan = df[old].notna()
+        df.loc[is_not_nan, new] = df.loc[is_not_nan, old]
+            
+    return df
+
+def v_chi2alpha(df):
+    setvars = [
+        ("mu_chi2_of_mu_cand", "mu_chi2alpha_p_of_mu_cand"),
+        ("mu_chi2_of_prot_cand",  "mu_chi2alpha_p_of_prot_cand"),
+        ("prot_chi2_of_mu_cand", "prot_chi2alpha_p_of_mu_cand"),
+        ("prot_chi2_of_prot_cand",  "prot_chi2alpha_p_of_prot_cand"),
+    ]
+    return v_variation(df, setvars)
+
+def v_chi2beta(df):
+    setvars = [
+        ("mu_chi2_of_mu_cand", "mu_chi2beta_p_of_mu_cand"),
+        ("mu_chi2_of_prot_cand",  "mu_chi2beta_p_of_prot_cand"),
+        ("prot_chi2_of_mu_cand", "prot_chi2beta_p_of_mu_cand"),
+        ("prot_chi2_of_prot_cand",  "prot_chi2beta_p_of_prot_cand"),
+    ]
+    return v_variation(df, setvars)
+
+def v_chi2R(df):
+    setvars = [
+        ("mu_chi2_of_mu_cand", "mu_chi2R_p_of_mu_cand"),
+        ("mu_chi2_of_prot_cand",  "mu_chi2R_p_of_prot_cand"),
+        ("prot_chi2_of_mu_cand", "prot_chi2R_p_of_mu_cand"),
+        ("prot_chi2_of_prot_cand",  "prot_chi2R_p_of_prot_cand"),
+    ]
+    return v_variation(df, setvars)
+
+def v_flashscale(df, updn):
+    TRIG_PE_SCALE     = {1: 0.642, 2: 0.632, 4: 0.358}  # Run -> best-fit s
+    TRIG_PE_SCALE_UNC = {1: 0.005, 2: 0.024, 4: 0.017}  # Run -> unc. on s
+
+    # 1. Map the dictionaries to the 'Run' column to get Series for both parts
+    unc_series = df["Run"].map(TRIG_PE_SCALE_UNC).astype(float)
+    scale_series = df["Run"].map(TRIG_PE_SCALE).astype(float)
+
+    # 2. Divide the two Series element-wise
+    f = unc_series / scale_series
+
+    # 3. Perform your vectorized math
+    df["flash_maxpe_var"] = df["flash_maxpe"] * (1 - updn * f)
+
+    setvars = [
+        ("flash_maxpe", "flash_maxpe_var"),
+    ]
+    ret = v_variation(df, setvars)
+
+    # Note: Added axis=1 here because drop defaults to dropping rows
+    return ret.drop("flash_maxpe_var", axis=1)
+
+def v_chi2smear(df):
+    setvars = [
+        ("mu_chi2_of_mu_cand", "mu_chi2smear13_of_mu_cand"),
+        ("mu_chi2_of_prot_cand",  "mu_chi2smear13_of_prot_cand"),
+        ("prot_chi2_of_mu_cand", "prot_chi2smear13_of_mu_cand"),
+        ("prot_chi2_of_prot_cand",  "prot_chi2smear13_of_prot_cand"),
+    ]
+    return v_variation(df, setvars)
+
+def v_chi2sqsmear(df):
+    setvars = [
+        ("mu_chi2_of_mu_cand", "mu_chi2sqsmear15_of_mu_cand"),
+        ("mu_chi2_of_prot_cand",  "mu_chi2sqsmear15_of_prot_cand"),
+        ("prot_chi2_of_mu_cand", "prot_chi2sqsmear15_of_mu_cand"),
+        ("prot_chi2_of_prot_cand",  "prot_chi2sqsmear15_of_prot_cand"),
+    ]
+    return v_variation(df, setvars)
+
+def v_chi2hi(df):
+    setvars = [
+        ("mu_chi2_of_mu_cand", "mu_chi2hi_of_mu_cand"),
+        ("mu_chi2_of_prot_cand",  "mu_chi2hi_of_prot_cand"),
+        ("prot_chi2_of_mu_cand", "prot_chi2hi_of_mu_cand"),
+        ("prot_chi2_of_prot_cand",  "prot_chi2hi_of_prot_cand"),
+    ]
+    return v_variation(df, setvars)
+
+def v_chi2lo(df):
+    setvars = [
+        ("mu_chi2_of_mu_cand", "mu_chi2lo_of_mu_cand"),
+        ("mu_chi2_of_prot_cand",  "mu_chi2lo_of_prot_cand"),
+        ("prot_chi2_of_mu_cand", "prot_chi2lo_of_mu_cand"),
+        ("prot_chi2_of_prot_cand",  "prot_chi2lo_of_prot_cand"),
+    ]
+    return v_variation(df, setvars)
+
+def v_chi22hi(df):
+    setvars = [
+        ("mu_chi2_of_mu_cand", "mu_chi22hi_of_mu_cand"),
+        ("mu_chi2_of_prot_cand",  "mu_chi22hi_of_prot_cand"),
+        ("prot_chi2_of_mu_cand", "prot_chi22hi_of_mu_cand"),
+        ("prot_chi2_of_prot_cand",  "prot_chi22hi_of_prot_cand"),
+    ]
+    return v_variation(df, setvars)
+
+def v_chi22lo(df):
+    setvars = [
+        ("mu_chi2_of_mu_cand", "mu_chi22lo_of_mu_cand"),
+        ("mu_chi2_of_prot_cand",  "mu_chi22lo_of_prot_cand"),
+        ("prot_chi2_of_mu_cand", "prot_chi22lo_of_mu_cand"),
+        ("prot_chi2_of_prot_cand",  "prot_chi22lo_of_prot_cand"),
+    ]
+    return v_variation(df, setvars)
+
 class SystematicList(object):
     def __init__(self, systs):
         self.systs = systs
@@ -7,7 +124,6 @@ class SystematicList(object):
     def cov(self, var, cut, bins, NCV, shapeonly=False, fillna=np.nan):
         if len(self.systs) == 0:
             return np.zeros((NCV.size, NCV.size))
-            
         return np.sum([s.cov(var, cut, bins, NCV, shapeonly=shapeonly, fillna=fillna) for s in self.systs], axis=0)
 
 def outern(arrs):
@@ -45,12 +161,12 @@ class Systematic(object):
         N_univ = []
         for i_univ in range(self.nuniv()):
             N = self.univ(var, cut, bins, i_univ, fillna=fillna)
+
             if shapeonly:
                 diff = outern([b[1:] - b[:-1] for b in bins])
                 norm = np.sum(N*diff)
                 if norm > 1e-5:
                     N = N / norm
-                
             N_univ.append(N)
     
         cov =  np.sum([np.outer(N - NCV, N - NCV) for N in N_univ], axis=0)
@@ -112,9 +228,19 @@ class StatSampleSystematic(object):
         return np.diag(var)
 
 class CorrelatedSystematic(Systematic):
-    def __init__(self, a, b):        
+    def __init__(self, a, b):
         self.systa = a
         self.systb = b
+
+        assert(self.systa.avg() == self.systb.avg())
+
+        if (self.systa.avg() == True and self.systb.avg() == True):
+            self._avg = True
+        elif (self.systa.avg() == False and self.systb.avg() == False):
+            self._avg = False
+
+    def avg(self):
+        return self._avg
 
     def nuniv(self):
         return self.systa.nuniv()
@@ -183,6 +309,38 @@ class SampleSystematic(Systematic):
 
         return np.histogramdd([self.dfs[i_univ].loc[self.dfs[i_univ][cut], v].fillna(fillna) for v in var], bins=bins, weights=self.dfs[i_univ].loc[self.dfs[i_univ][cut], self.scale])[0].flatten()
 
+class SelectionSystematic(Systematic):
+    """Systematic evaluated by re-histogramming the SAME dataframe with
+    alternate boolean selection columns (one universe per column).
+
+    With avg=True (default), an [up, dn] pair of one-sided universes is
+    averaged; a single one-sided universe is treated as a symmetrized
+    1-sigma variation.
+    """
+    def __init__(self, df, cuts, scale="glob_scale", avg=True):
+        if not isinstance(cuts, list):
+            cuts = [cuts]
+        self.df = df
+        self.cuts = cuts
+        self.scale = scale
+        self._avg = avg
+
+    def nuniv(self):
+        return len(self.cuts)
+
+    def avg(self):
+        return self._avg
+
+    def univ(self, var, cut, bins, i_univ, fillna=np.nan):
+        # ignores the CV cut name passed in; uses this universe's own cut column
+        if not isinstance(var, list):
+            var = [var]
+            bins = [bins]
+        c = self.cuts[i_univ]
+        return np.histogramdd([self.df.loc[self.df[c], v].fillna(fillna) for v in var],
+                              bins=bins,
+                              weights=self.df.loc[self.df[c], self.scale])[0].flatten()
+
 class WeightSystematic(Systematic):
     def __init__(self, df, wgts, avg=True, scale="glob_scale"):
         self.df = df
@@ -202,6 +360,6 @@ class WeightSystematic(Systematic):
             var = [var]
             bins = [bins]
 
-        wgt_v = self.df[self.scale] * self.df[self.wgts[i_univ]]
+        wgt_v = self.df[self.scale] * self.df[self.wgts[i_univ]].fillna(fillna)
         return np.histogramdd([self.df.loc[self.df[cut], v].fillna(fillna) for v in var], bins=bins, weights=wgt_v[self.df[cut]])[0].flatten()
 

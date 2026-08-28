@@ -1,3 +1,4 @@
+import functools
 from functools import reduce
 from pyanalib.pandas_helpers import *
 from .branches import *
@@ -5,6 +6,10 @@ from .util import *
 from .calo import *
 from . import numisyst, g4syst, geniesyst, bnbsyst, getenv
 from makedf import chi2pid
+import pyanalib.pandas_helpers as ph
+from makedf import branches
+import makedf.util as util
+from tqdm import tqdm
 
 pd.set_option('future.no_silent_downcasting', True)
 
@@ -23,7 +28,7 @@ PDG = {
     "sigma_0": [3212, "sigma_0", 1.19246],
     "lambda_p_c": [4122, "lambda_p_c", 2.28646],
     "sigma_pp_c": [4222, "sigma_pp_c", 2.45397],
-    "electron": [11, "electron", 0.510998950],
+    "electron": [11, "electron", 0.000510998950],
     "sigma_p_c": [4212, "sigma_p_c", 2.4529],
 }
 
@@ -125,7 +130,7 @@ def make_mcnudf(f, include_weights=False, multisim_nuniv=100, genie_multisim_nun
             wgtdf = pd.concat(df_list, axis=1)
             mcdf = multicol_concat(mcdf, wgtdf)
 
-    return mcdf
+    return mcdf  
 
 def make_mevprtlwgtdf(f):
     return make_mevprtldf(f, include_weights=True, multisim_nuniv=100)
@@ -263,8 +268,8 @@ def make_trkdf(f, scoreCut=False, requiret0=False, requireCosmic=False, mcs=Fals
                 this_chi2_new, this_chi2_ndof = chi2pid.chi2par(trkhitdf, dedxname="dedx_redo", par=par)
                 this_chi2_col = ('pfp', 'trk', 'chi2pid', 'I' + str(plane), 'chi2_' + par + '_new', '')
                 this_ndof_col = ('pfp', 'trk', 'chi2pid', 'I' + str(plane), 'ndof_' + par + '_new', '')
-                trkdf[this_chi2_col] = this_chi2_new.fillna(0.)
-                trkdf[this_ndof_col] = this_chi2_ndof.fillna(0.)
+                trkdf[this_chi2_col] = this_chi2_new.fillna(-999)
+                trkdf[this_ndof_col] = this_chi2_ndof.fillna(-999)
 
     return trkdf
 
@@ -412,6 +417,11 @@ def make_mcdf(f, branches=mcbranches, primbranches=mcprimbranches):
     pdf = mcprimdf[mcprimdf.pdg==2212].sort_values(mcprimdf.index.names[:2] + [("genE", "")]).groupby(level=[0,1]).last()
     pdf.columns = pd.MultiIndex.from_tuples([tuple(["p"] + list(c)) for c in pdf.columns])
 
+    # sub-leading proton
+    p2df = mcprimdf[mcprimdf.pdg==2212].sort_values(mcprimdf.index.names[:2] + [("genE", "")]).groupby(level=[0,1]).tail(2).groupby(level=[0,1]).first()
+    p2df.columns = pd.MultiIndex.from_tuples([tuple(["p2"] + list(c)) for c in p2df.columns])
+    p2df = p2df[p2df.p2.length != pdf.p.length] # remove single-proton slices
+
     # electron info
     edf = mcprimdf[np.abs(mcprimdf.pdg)==11].sort_values(mcprimdf.index.names[:2] + [("genE", "")]).groupby(level=[0,1]).last()
     edf.columns = pd.MultiIndex.from_tuples([tuple(["e"] + list(c)) for c in edf.columns])
@@ -419,19 +429,40 @@ def make_mcdf(f, branches=mcbranches, primbranches=mcprimbranches):
     mcdf = multicol_merge(mcdf, mudf, left_index=True, right_index=True, how="left", validate="one_to_one")
     mcdf = multicol_merge(mcdf, cpidf, left_index=True, right_index=True, how="left", validate="one_to_one")
     mcdf = multicol_merge(mcdf, pdf, left_index=True, right_index=True, how="left", validate="one_to_one")
+    mcdf = multicol_merge(mcdf, p2df, left_index=True, right_index=True, how="left", validate="one_to_one")
     mcdf = multicol_merge(mcdf, edf, left_index=True, right_index=True, how="left", validate="one_to_one")
 
     # primary track variables
     mcdf.loc[:, ('mu','totp','')] = np.sqrt(mcdf.mu.genp.x**2 + mcdf.mu.genp.y**2 + mcdf.mu.genp.z**2)
+    mcdf.loc[:, ('e','totp','')] = np.sqrt(mcdf.e.genp.x**2 + mcdf.e.genp.y**2 + mcdf.e.genp.z**2)
+    mcdf.loc[:, ('cpi','totp','')] = np.sqrt(mcdf.cpi.genp.x**2 + mcdf.cpi.genp.y**2 + mcdf.cpi.genp.z**2)
     mcdf.loc[:, ('p','totp','')] = np.sqrt(mcdf.p.genp.x**2 + mcdf.p.genp.y**2 + mcdf.p.genp.z**2)
+    mcdf.loc[:, ('p2','totp','')] = np.sqrt(mcdf.p2.genp.x**2 + mcdf.p2.genp.y**2 + mcdf.p2.genp.z**2)
 
     # opening angles
     mcdf.loc[:, ('mu','dir','x')] = mcdf.mu.genp.x/mcdf.mu.totp
     mcdf.loc[:, ('mu','dir','y')] = mcdf.mu.genp.y/mcdf.mu.totp
     mcdf.loc[:, ('mu','dir','z')] = mcdf.mu.genp.z/mcdf.mu.totp
+    mcdf.loc[:, ('e','dir','x')] = mcdf.e.genp.x/mcdf.e.totp
+    mcdf.loc[:, ('e','dir','y')] = mcdf.e.genp.y/mcdf.e.totp
+    mcdf.loc[:, ('e','dir','z')] = mcdf.e.genp.z/mcdf.e.totp
+    mcdf.loc[:, ('cpi','dir','x')] = mcdf.cpi.genp.x/mcdf.cpi.totp
+    mcdf.loc[:, ('cpi','dir','y')] = mcdf.cpi.genp.y/mcdf.cpi.totp
+    mcdf.loc[:, ('cpi','dir','z')] = mcdf.cpi.genp.z/mcdf.cpi.totp
     mcdf.loc[:, ('p','dir','x')] = mcdf.p.genp.x/mcdf.p.totp
     mcdf.loc[:, ('p','dir','y')] = mcdf.p.genp.y/mcdf.p.totp
     mcdf.loc[:, ('p','dir','z')] = mcdf.p.genp.z/mcdf.p.totp
+    mcdf.loc[:, ('p2','dir','x')] = mcdf.p2.genp.x/mcdf.p2.totp
+    mcdf.loc[:, ('p2','dir','y')] = mcdf.p2.genp.y/mcdf.p2.totp
+    mcdf.loc[:, ('p2','dir','z')] = mcdf.p2.genp.z/mcdf.p2.totp
+
+    # endpoints
+    mcdf.loc[:, ('mu','end','x')] = mcdf.mu.end.x
+    mcdf.loc[:, ('mu','end','y')] = mcdf.mu.end.y
+    mcdf.loc[:, ('mu','end','z')] = mcdf.mu.end.z
+    mcdf.loc[:, ('p','end','x')] = mcdf.p.end.x
+    mcdf.loc[:, ('p','end','y')] = mcdf.p.end.y
+    mcdf.loc[:, ('p','end','z')] = mcdf.p.end.z
 
     return mcdf
 
@@ -495,14 +526,14 @@ def make_pandora_df(f, trkScoreCut=False, trkDistCut=50., cutClearCosmic=False, 
             #    print(trkhitdf[trkhitdf.rr < 26.].loc[(3, 0, 1), ['dedx', 'dedx_redo', 'dedx_bias', 'dqdx', 'dqdx_redo', 'etau_corr', 'yz_scale', 'integ_ov_pitch', 'integral', 'pitch', 'tpc', 'x', 'y', 'z', 'run', 'iov', 'rho', 'rr']])
             #    print(trkhitdf[trkhitdf.rr < 26.].loc[(4, 0, 1), ['dedx', 'dedx_redo', 'dedx_bias', 'dqdx', 'dqdx_redo', 'etau_corr', 'yz_scale', 'integ_ov_pitch', 'integral', 'pitch', 'tpc', 'x', 'y', 'z', 'run', 'iov', 'rho', 'rr']])
             #    print(trkhitdf[trkhitdf.rr < 26.].loc[(5, 1, 0), ['dedx', 'dedx_redo', 'dedx_bias', 'dqdx', 'dqdx_redo', 'etau_corr', 'yz_scale', 'integ_ov_pitch', 'integral', 'pitch', 'tpc', 'x', 'y', 'z', 'run', 'iov', 'rho', 'rr']])
-            for par in ['muon', 'proton']:
+            for par in ['muon', 'proton', 'pion']:
                 this_chi2_new, this_chi2_ndof = chi2pid.chi2par(trkhitdf, dedxname="dedx_redo", par=par)
                 this_chi2_col = ('pfp', 'trk', 'chi2pid', 'I' + str(plane), 'chi2_' + par + '_new', '')
                 this_ndof_col = ('pfp', 'trk', 'chi2pid', 'I' + str(plane), 'ndof_' + par + '_new', '')
                 trkdf[this_chi2_col] = this_chi2_new
                 trkdf[this_ndof_col] = this_chi2_ndof
-                trkdf[this_chi2_col] = trkdf[this_chi2_col].fillna(0.)
-                trkdf[this_ndof_col] = trkdf[this_ndof_col].fillna(0)
+                trkdf[this_chi2_col] = trkdf[this_chi2_col].fillna(-999)
+                trkdf[this_ndof_col] = trkdf[this_ndof_col].fillna(-999)
 
     slcdf = make_slcdf(f)
 
@@ -873,3 +904,179 @@ def make_spine_flash_df(f):
     spine_flash_df = reduce(lambda l, r: l.join(r, how='outer'), dfs)
 
     return spine_flash_df
+
+def make_corrections_df(f):
+    corE = loadbranches(f["recTree"], corrections)
+    return corE
+
+
+#InFV_SBND = functools.partial(util.InFV, inzback=np.nan, det='SBND')
+#InFV_IC = functools.partial(util.InFV, inzback=np.nan, det='ICARUS')
+
+def make_recodf(f: pd.DataFrame, save_track_truth: bool=False) -> pd.DataFrame:
+    pandora_df = make_pandora_df(f, trkDistCut=0)
+
+    # precuts
+    det = loadbranches(f["recTree"], ["rec.hdr.det"]).rec.hdr.det
+    run = loadbranches(f["recTree"], ["rec.hdr.run"]).rec.hdr.run
+
+    pandora_df = pandora_df[pandora_df.slc.is_clear_cosmic == 0]
+
+    # daughter info
+    '''
+    rec
+                                                                                             slc
+                                                                                            reco
+                                                                                             pfp
+                                                                                       daughters
+        entry rec.slc..index rec.slc.reco.pfp..index rec.slc.reco.pfp.daughters..index
+        0     0              1                       0                                         3
+              1              1                       0                                         6
+              2              3                       0                                        14
+                                                     1                                        27
+                                                     2                                        38
+    daughter_to_pfp = daughterdf.reset_index().set_index(['entry', 'rec.slc..index', ('rec', 'slc', 'reco', 'pfp', 'daughters')])
+    daughter_df = pandora_df[pandora_df.index.isin(daughter_to_pfp.index)]
+    print(daughter_df.pfp)
+    '''
+
+    daughterdf = ph.loadbranches(f["recTree"], branches.pfp_daughter_branch)
+    ndaughterdf = daughterdf.groupby(level=[0, 1, 2]).count()
+    daughter_id = (
+            daughterdf[
+                daughterdf.index.isin(ndaughterdf[ndaughterdf.rec.slc.reco.pfp.daughters == 1].index)
+            ].reset_index(level=-1)
+    )[[('rec', 'slc', 'reco', 'pfp', 'daughters')]].droplevel([0, 1, 2], axis='columns')
+
+    pandora_df = ph.multicol_merge(pandora_df, daughter_id, left_index=True, right_index=True, how='left')
+
+    # drop things we don't need
+    mask = (
+        (
+            (pandora_df.columns.get_level_values(0) == "pfp")
+            & (pandora_df.columns.get_level_values(1).isin(
+                ["trk", "trackScore", "dist_to_vertex", "t0", "daughters"]
+            ) | (save_track_truth & (pandora_df.columns.get_level_values(2) == "truth")))
+        )
+        | (
+            (pandora_df.columns.get_level_values(0) == "slc")
+            & (pandora_df.columns.get_level_values(1).isin(
+                ["tmatch", "vertex", "bcfm_score", "nu_score"]
+            ) | ((pandora_df.columns.get_level_values(1) == "truth")
+                &
+                (pandora_df.columns.get_level_values(2).isin(
+                    ["pdg", "E", "baseline", "genie_mode", "q0_lab", "modq_lab", "Q2"]
+                )))
+        )
+    )
+    )
+    pandora_df = pandora_df.loc[:, mask]
+
+    #recodf = all_fv_cuts(pandora_df, "SBND")
+    recodf = pandora_df
+    recodf[('pfp', 'trk', 'particle_reco', '', '', '')] = np.zeros(len(recodf))
+
+    recodf = multicol_add(recodf, (np.abs(recodf.pfp.trk.truth.p.pdg)==2112).groupby(level=[0,1]).sum().rename(('slc', 'truth', 'nn')))
+    recodf = multicol_add(recodf, (np.abs(recodf.pfp.trk.truth.p.pdg)==2212).groupby(level=[0,1]).sum().rename(('slc', 'truth', 'np')))
+    recodf = multicol_add(recodf, (np.abs(recodf.pfp.trk.truth.p.pdg)==13).groupby(level=[0,1]).sum().rename(('slc', 'truth', 'nmu')))
+    recodf = multicol_add(recodf, (np.abs(recodf.pfp.trk.truth.p.pdg)==211).groupby(level=[0,1]).sum().rename(('slc', 'truth', 'npi')))
+
+    return recodf
+
+
+make_recodf_save_track_truth = functools.partial(make_recodf, save_track_truth=True)
+make_recodf_drop_track_truth = functools.partial(make_recodf, save_track_truth=False)
+
+
+### Merging track level mc and reco dfs
+def match_prim_reco(prim, reco):
+
+    def flatten_cols(df):
+        df = df.reset_index()
+        # Join non-empty tuple parts with '_', strip leading/trailing underscores
+        df.columns = [
+            '_'.join(str(p) for p in col if str(p).strip()).strip('_')
+            if isinstance(col, tuple) else str(col)
+            for col in df.columns.to_flat_index()
+        ]
+        # Deduplicate column names if any clash after flattening
+        seen = {}
+        new_cols = []
+        for c in df.columns:
+            if c in seen:
+                seen[c] += 1
+                new_cols.append(f"{c}_{seen[c]}")
+            else:
+                seen[c] = 0
+                new_cols.append(c)
+        df.columns = new_cols
+        return df
+
+    left  = flatten_cols(reco)
+    right = flatten_cols(prim)
+
+    group_keys_left  = ['ntuple', 'entry', 'slc_tmatch_idx']
+    group_keys_right = ['ntuple', 'entry', 'rec.mc.nu..index']
+    right_cols = ['ntuple', 'entry', 'rec.mc.nu..index', 'rec_mc_nu_prim_pdg', 'rec_mc_nu_prim_interaction_id', 'rec_mc_nu_prim_genp_x', 'rec_mc_nu_prim_genp_y', 'rec_mc_nu_prim_genp_z', 'rec_mc_nu_prim_genE']
+    groups=[]
+
+    for key, left_grp in tqdm(left.groupby(group_keys_left), total=left.groupby(group_keys_left).ngroups, desc="Matching groups"):
+        mask = ((right['ntuple'] == key[0]) & 
+            (right['entry']  == key[1]) & 
+            (right['rec.mc.nu..index'] == key[2]))
+        right_grp = right[mask][right_cols].reset_index(drop=True)
+
+        if right_grp.empty:
+            continue
+    
+        left_grp  = left_grp.reset_index(drop=True)
+
+        # Track matching based on true energy
+        left_pdgs  = left_grp['pfp_trk_truth_p_genE'].tolist()
+        right_pdgs = right_grp['rec_mc_nu_prim_genE'].tolist()
+
+        used = set()
+        right_order = []
+        for pdg in left_pdgs:
+            match = next((j for j, rpdg in enumerate(right_pdgs)
+                        if j not in used and rpdg == pdg), None)
+            if match is not None:
+                used.add(match)
+            right_order.append(match)
+
+        if len(used) == 0:
+            continue
+
+        unmatched = [j for j in range(len(right_grp)) if j not in used]
+        final_right_order = right_order + unmatched
+        right_grp = right_grp.reindex(final_right_order).reset_index(drop=True)
+
+        n = max(len(left_grp), len(right_grp))
+        left_grp  = left_grp.reindex(range(n))
+        right_grp = right_grp.reindex(range(n))
+
+        left_grp['ntuple']         = key[0]
+        left_grp['entry']          = key[1]
+        left_grp['slc_tmatch_idx'] = key[2]
+        left_grp['rec.slc..index'] = left_grp['rec.slc..index'].ffill()
+
+        right_grp = right_grp.drop(columns=group_keys_right)
+        combined = pd.concat([left_grp, right_grp], axis=1)
+        groups.append(combined)
+
+
+    matched_df = pd.concat(groups, ignore_index=True)
+    matched_df['rec.slc..index'] = matched_df['rec.slc..index'].astype(int)
+    matched_df['rec.slc.reco.pfp..index'] = matched_df['rec.slc.reco.pfp..index'].fillna(-999)
+    matched_df['rec.slc.reco.pfp..index'] = matched_df['rec.slc.reco.pfp..index'].astype(int)
+    matched_df['pfp_trk_truth_p_pdg'] = matched_df['pfp_trk_truth_p_pdg'].fillna(-999)
+    matched_df['pfp_trk_truth_p_pdg'] = matched_df['pfp_trk_truth_p_pdg'].astype(int)
+
+    matched_df = matched_df.set_index(['ntuple', 'entry', 'rec.slc..index', 'rec.slc.reco.pfp..index'])
+
+    print(f"BAD MATCHING: {len(matched_df[(matched_df['pfp_trk_truth_p_genE'] != matched_df['rec_mc_nu_prim_genE']) & matched_df['pfp_trk_truth_p_genE'].notna() & matched_df['rec_mc_nu_prim_genE'].notna()])}")
+
+    return matched_df
+
+    
+

@@ -1,0 +1,104 @@
+<?xml version="1.0" ?>
+
+<!-- One mode and Single Detector Analysis -->
+<mode name="nu" />
+<detector name="SBND" pot="1e20"/>
+<detector name="ICARUSRun4" pot="3e20"/>
+
+<!--Single Channel : Numu Selcetion-->
+<channel name="numu" plotname="SPINE CC #nu_{#mu} Np Selection">
+    <bins unit="Reconstructed Neutrino Energy [GeV]" edges="0.3 0.4 0.45 0.5 0.55 0.6 0.65 0.7 0.75 0.8 0.85 0.9 0.95 1.0 1.5 2.0 2.5"/>
+    <bins unit="True Neutrino Energy [GeV]" min="0" max="3" nbins="20"/>
+    <bins unit="True L/E [km/GeV]" min="0" max="3" nbins="150" plot="false"/>
+    <subchannel name="1p"       plotname="#nu_{#mu} true 1p"     color="#14d6e8"/>
+    <subchannel name="Np"      plotname="#nu_{#mu} true N>1 p"  color="#1c15e5"/>
+</channel>
+
+<!-- The Physics model to fit, here numu disapearance only-->
+<model tag="numudis">
+    <rule index="0" name="No Osc"/>
+    <rule index="1" name="Numu Dis"/>
+    <parameter name="L/E" variable_index="2"/>
+</model>
+
+<!-- Where to find the Montecarlo and how to fill all the subchannels defined above-->
+<MCFile treename="SelectedEvents" filename="/exp/sbnd/data/users/arao/SBND/sbruce/muNp0pi_wgtdf_sbnd_sbruce_*.root" scale = "1.0" pot="4.500985937048424e19"> 
+    <friend treename="multisigmaTree"/>
+    <friend treename="multisimTree"/>
+    <branch
+        associated_subchannel = "nu_SBND_numu_1p"
+        model_rule            = "1"
+        additional_weight     = "(slc_truth_np == 1) * (slc_reco_np >= 1) * (pfp_trk_truth_p_interaction_id >= 0)"
+    >
+        <variable>slc_reco_E</variable>
+        <variable>true_nu_E</variable>
+        <variable>true_baseline/(1000*true_nu_E)</variable>
+    </branch>
+
+    <branch
+        associated_subchannel = "nu_SBND_numu_Np"
+        model_rule            = "1"
+        additional_weight     = "(slc_truth_np >= 2) * (slc_reco_np >= 1) * (pfp_trk_truth_p_interaction_id >= 0)"
+    >
+        <variable>slc_reco_E</variable>
+        <variable>true_nu_E</variable>
+        <variable>true_baseline/(1000*true_nu_E)</variable>
+    </branch>
+</MCFile>
+
+<systematics>
+    <!-- Inlcude MC stats, uncomment out to remove -->
+    <systematic type="mcstat" plotname="MC Stats" tag="Other">MCStat</systematic>
+
+    <systematic type="norm" plotname="SBNDDet" tag="Other">nu_SBND:0.02</systematic>
+    <systematic type="norm" plotname="ICARUSDet" tag="Other">nu_ICARUS:0.02</systematic>
+
+    <!-- GENIE systematics -->
+    <systematic type="spline" binning="var1" plotname="VecFFCCQEshape" tag="Cross-Section-I">GENIEReWeight_SBN_v1_multisigma_VecFFCCQEshape</systematic>
+    <systematic type="spline" binning="var1" plotname="CoulombCCQE" tag="Cross-Section-I">GENIEReWeight_SBN_v1_multisigma_CoulombCCQE</systematic>
+    <systematic type="spline" binning="var1" plotname="NormCCMEC" tag="Cross-Section-I">GENIEReWeight_SBN_v1_multisigma_NormCCMEC</systematic>
+    <systematic type="spline" binning="var1" plotname="NormNCMEC" tag="Cross-Section-I">GENIEReWeight_SBN_v1_multisigma_NormNCMEC</systematic>
+    <systematic type="spline" binning="var1" plotname="DecayAngMEC" tag="Cross-Section-I">GENIEReWeight_SBN_v1_multisigma_DecayAngMEC</systematic>
+    <systematic type="spline" binning="var1" plotname="Theta_Delta2Npi" tag="Cross-Section-I">GENIEReWeight_SBN_v1_multisigma_Theta_Delta2Npi</systematic>
+    <systematic type="spline" binning="var1" plotname="ThetaDelta2NRad" tag="Cross-Section-I">GENIEReWeight_SBN_v1_multisigma_ThetaDelta2NRad</systematic>
+    <systematic type="spline" binning="var1" plotname="MaCCRES" tag="Cross-Section-I">GENIEReWeight_SBN_v1_multisigma_MaCCRES</systematic>
+    <systematic type="spline" binning="var1" plotname="MaNCRES" tag="Cross-Section-I">GENIEReWeight_SBN_v1_multisigma_MaNCRES</systematic>
+    <systematic type="spline" binning="var1" plotname="MvCCRES" tag="Cross-Section-I">GENIEReWeight_SBN_v1_multisigma_MvCCRES</systematic>
+    <systematic type="spline" binning="var1" plotname="MvNCRES" tag="Cross-Section-I">GENIEReWeight_SBN_v1_multisigma_MvNCRES</systematic>
+    <systematic type="spline" binning="var1" plotname="RDecBR1gamma" tag="Cross-Section-I">GENIEReWeight_SBN_v1_multisigma_RDecBR1gamma</systematic>
+    <systematic type="spline" binning="var1" plotname="RDecBR1eta" tag="Cross-Section-I">GENIEReWeight_SBN_v1_multisigma_RDecBR1eta</systematic>
+
+    <systematic type="covariance" plotname="NonRESBGvpCC1pi" tag="Cross-Section-III-NonRes">multisigma_GENIEReWeight_SBN_v1_multisim_NonRESBGvpCC1pi</systematic>
+    <systematic type="covariance" plotname="NonRESBGvpCC2pi" tag="Cross-Section-III-NonRes">multisigma_GENIEReWeight_SBN_v1_multisim_NonRESBGvpCC2pi</systematic>
+    <systematic type="covariance" plotname="NonRESBGvpNC1pi" tag="Cross-Section-III-NonRes">multisigma_GENIEReWeight_SBN_v1_multisim_NonRESBGvpNC1pi</systematic>
+    <systematic type="covariance" plotname="NonRESBGvpNC2pi" tag="Cross-Section-III-NonRes">multisigma_GENIEReWeight_SBN_v1_multisim_NonRESBGvpNC2pi</systematic>
+    <systematic type="covariance" plotname="NonRESBGvnCC1pi" tag="Cross-Section-III-NonRes">multisigma_GENIEReWeight_SBN_v1_multisim_NonRESBGvnCC1pi</systematic>
+    <systematic type="covariance" plotname="NonRESBGvnCC2pi" tag="Cross-Section-III-NonRes">multisigma_GENIEReWeight_SBN_v1_multisim_NonRESBGvnCC2pi</systematic>
+    <systematic type="covariance" plotname="NonRESBGvnNC1pi" tag="Cross-Section-III-NonRes">multisigma_GENIEReWeight_SBN_v1_multisim_NonRESBGvnNC1pi</systematic>
+    <systematic type="covariance" plotname="NonRESBGvnNC2pi" tag="Cross-Section-III-NonRes">multisigma_GENIEReWeight_SBN_v1_multisim_NonRESBGvnNC2pi</systematic>
+    <systematic type="covariance" plotname="NonRESBGvbarpCC1pi" tag="Cross-Section-III-NonRes">multisigma_GENIEReWeight_SBN_v1_multisim_NonRESBGvbarpCC1pi</systematic>
+    <systematic type="covariance" plotname="NonRESBGvbarpCC2pi" tag="Cross-Section-III-NonRes">multisigma_GENIEReWeight_SBN_v1_multisim_NonRESBGvbarpCC2pi</systematic>
+    <systematic type="covariance" plotname="NonRESBGvbarpNC1pi" tag="Cross-Section-III-NonRes">multisigma_GENIEReWeight_SBN_v1_multisim_NonRESBGvbarpNC1pi</systematic>
+    <systematic type="covariance" plotname="NonRESBGvbarpNC2pi" tag="Cross-Section-III-NonRes">multisigma_GENIEReWeight_SBN_v1_multisim_NonRESBGvbarpNC2pi</systematic>
+    <systematic type="covariance" plotname="NonRESBGvbarnCC1pi" tag="Cross-Section-III-NonRes">multisigma_GENIEReWeight_SBN_v1_multisim_NonRESBGvbarnCC1pi</systematic>
+    <systematic type="covariance" plotname="NonRESBGvbarnCC2pi" tag="Cross-Section-III-NonRes">multisigma_GENIEReWeight_SBN_v1_multisim_NonRESBGvbarnCC2pi</systematic>
+    <systematic type="covariance" plotname="NonRESBGvbarnNC1pi" tag="Cross-Section-III-NonRes">multisigma_GENIEReWeight_SBN_v1_multisim_NonRESBGvbarnNC1pi</systematic>
+    <systematic type="covariance" plotname="NonRESBGvbarnNC2pi" tag="Cross-Section-III-NonRes">multisigma_GENIEReWeight_SBN_v1_multisim_NonRESBGvbarnNC2pi</systematic>
+
+    <systematic type="spline" binning="var1" plotname="AhtBY" tag="Cross-Section-III-NonRes">GENIEReWeight_SBN_v1_multisigma_AhtBY</systematic>
+    <systematic type="spline" binning="var1" plotname="BhtBY" tag="Cross-Section-III-NonRes">GENIEReWeight_SBN_v1_multisigma_BhtBY</systematic>
+    <systematic type="spline" binning="var1" plotname="CV1uBY" tag="Cross-Section-III-NonRes">GENIEReWeight_SBN_v1_multisigma_CV1uBY</systematic>
+    <systematic type="spline" binning="var1" plotname="CV2uBY" tag="Cross-Section-III-NonRes">GENIEReWeight_SBN_v1_multisigma_CV2uBY</systematic>
+
+    <systematic type="spline" binning="var1" plotname="NormCCCOH" tag="Cross-Section-I">GENIEReWeight_SBN_v1_multisigma_NormCCCOH</systematic>
+    <systematic type="spline" binning="var1" plotname="NormNCCOH" tag="Cross-Section-I">GENIEReWeight_SBN_v1_multisigma_NormNCCOH</systematic>
+
+    <systematic type="spline" binning="var1" plotname="MFP_pi" tag="Cross-Section-II-FSI">GENIEReWeight_SBN_v1_multisigma_MFP_pi</systematic>
+    <systematic type="spline" binning="var1" plotname="FrCEx_pi" tag="Cross-Section-II-FSI">GENIEReWeight_SBN_v1_multisigma_FrCEx_pi</systematic>
+    <systematic type="spline" binning="var1" plotname="FrInel_pi" tag="Cross-Section-II-FSI">GENIEReWeight_SBN_v1_multisigma_FrInel_pi</systematic>
+    <systematic type="spline" binning="var1" plotname="FrAbs_pi" tag="Cross-Section-II-FSI">GENIEReWeight_SBN_v1_multisigma_FrAbs_pi</systematic>
+    <systematic type="spline" binning="var1" plotname="FrPiProd_pi" tag="Cross-Section-II-FSI">GENIEReWeight_SBN_v1_multisigma_FrPiProd_pi</systematic>
+
+    <systematic type="spline" binning="var1" plotname="MaNCEL" tag="Cross-Section-I">GENIEReWeight_SBN_v1_multisigma_MaNCEL</systematic>
+    <systematic type="spline" binning="var1" plotname="EtaNCEL" tag="Cross-Section-I">GENIEReWeight_SBN_v1_multisigma_EtaNCEL</systematic>
+</systematics>

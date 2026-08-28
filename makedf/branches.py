@@ -15,6 +15,7 @@ hdrbranches = [
     "rec.hdr.pot",
     "rec.hdr.first_in_subrun",
     "rec.hdr.ismc",
+    "rec.hdr.det",
     "rec.hdr.run",
     "rec.hdr.subrun",
     "rec.hdr.ngenevt",
@@ -42,6 +43,7 @@ trigger_info_branches = [
 
 opflashbranches = [
     "rec.opflashes.firsttime",
+    "rec.opflashes.cryo",
     "rec.opflashes.time",
     "rec.opflashes.totalpe",
 ]
@@ -130,6 +132,7 @@ crthitbranches = [
   "rec.crt_hits.t0",
   "rec.crt_hits.pe",
   "rec.crt_hits.plane",
+  "rec.crt_hits.truth.bestmatch_id"
 ]
 
 
@@ -182,6 +185,7 @@ trkbranches = [
     trkbranch + "chi2pid.2.pid_ndof",
     trkbranch + "chi2pid.2.chi2_muon",
     trkbranch + "chi2pid.2.chi2_proton",
+    trkbranch + "chi2pid.2.chi2_pion",
     trkbranch + "chi2pid.2.pida",
 ] + pfpbranches
 
@@ -307,6 +311,8 @@ mcbranches = [
     "rec.mc.nu.time",
     "rec.mc.nu.bjorkenX",
     "rec.mc.nu.inelasticityY",
+    "rec.mc.nu.q0_lab",
+    "rec.mc.nu.modq_lab",
     "rec.mc.nu.Q2",
     "rec.mc.nu.w",
     "rec.mc.nu.momentum.x",
@@ -320,6 +326,10 @@ mcbranches = [
     "rec.mc.nu.genie_mode",
     "rec.mc.nu.parent_pdg",
     "rec.mc.nu.parent_dcy_E",
+    "rec.mc.nu.parent_dcy_mode",
+    "rec.mc.nu.parent_dcy_mom.x",
+    "rec.mc.nu.parent_dcy_mom.y",
+    "rec.mc.nu.parent_dcy_mom.z",
     "rec.mc.nu.genie_evtrec_idx",
 ]
 
@@ -858,3 +868,11 @@ spinetpart_moduleids_branches = [
 spinetpart_originchildrenid_branches = [
     spinetpart + "orig_children_id"             # Original ID of the children particles.
 ]
+
+corrections = [                                 
+    "rec.mc.nu.q0_lab",                         # Energy of the exchange propagator
+    "rec.mc.nu.inelasticityY",                  # Inelasticity
+    "rec.mc.nu.nproton",                        # Pre-fsi proton number
+    "rec.mc.nu.nneutron"                        # Pre-fsi neutron number
+]
+

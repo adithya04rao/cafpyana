@@ -12,7 +12,7 @@ from pyanalib.split_df_helpers import *
 from makedf.util import *
 
 from itertools import product 
-from more_itertools import distinct_permutations
+from setuptools._vendor.more_itertools import distinct_permutations
 
 def get_gain_vars(recodf, plot=False):
     """Main analysis pipeline."""

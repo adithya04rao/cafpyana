@@ -1,0 +1,327 @@
+<?xml version="1.0" ?>
+
+<mode name="nu" />
+
+<detector name="SBND" pot="1e20"/>
+<detector name="ICARUSRun2" pot="2e20"/>
+<detector name="ICARUSRun4" pot="3e20"/>
+
+<channel name="numu" unit="Reconstructed Neutrino Energy [GeV]">
+    <bins2D unit="RecoE;del_p" edgesx="0.3 0.4 0.45 0.5 0.55 0.6 0.65 0.7 0.75 0.8 0.85 0.9 0.95 1.0 1.25 1.5" edgesy="0.0 0.2 0.4 0.6"/>
+    <bins unit = "True L/E" min="0" max="2.5" nbins="200" plot="false"/>
+    <subchannel name="cc" plotname="#nu_{#mu}CC" color="#1e3f54"/>
+    <subchannel name="numunc" plotname="NuMuNC" color="#95af8b"/>
+    <subchannel name="othernc" plotname="OtherNC" color="#A4459F"/>
+    <subchannel name="bkg" plotname="Other" color="#c89648"/>
+    <subchannel name="intime" plotname="In Time Cosmics" color="#500000"/>
+    <subchannel name="dirt" plotname="Dirt" color="#CC5500"/>
+</channel>
+
+<model tag="numudis">
+    <rule index="0" name="No Osc"/>
+    <rule index="1" name="Numu Disapp"/>
+    <parameter variable_index = "1" name="L/E"/>
+</model>
+
+<variation_list>
+    <allowlist type="norm"  tag="Det" plotname="ICARUSRun2 Dirt">nu_ICARUSRun2_numu_dirt:0.3</allowlist>
+    <allowlist type="norm"  tag="Det" plotname="ICARUSRun4 Dirt">nu_ICARUSRun4_numu_dirt:0.3</allowlist>
+    <!--<allowlist type="mcstat" plotname="MC Stats" >mcstats</allowlist>-->
+    <allowlist type="spline" tag="MEC" plotname="Valencia Correction">multisigma_CCQEXSecCorr_SBN_v3_CCQEXSecCorr</allowlist>
+    <allowlist type="spline" tag="SF" plotname="Spectral Function Bin 0">multisigma_CCQETemplateReweight_SBN_v3_LFGToSF_q0bin0</allowlist>
+    <allowlist type="spline" tag="SF" plotname="Spectral Function Bin 1">multisigma_CCQETemplateReweight_SBN_v3_LFGToSF_q0bin1</allowlist>
+    <allowlist type="spline" tag="SF" plotname="Spectral Function Bin 2">multisigma_CCQETemplateReweight_SBN_v3_LFGToSF_q0bin2</allowlist>
+    <allowlist type="spline" tag="SF" plotname="Spectral Function Bin 3">multisigma_CCQETemplateReweight_SBN_v3_LFGToSF_q0bin3</allowlist>
+    <allowlist type="spline" tag="SF" plotname="Spectral Function Bin 4">multisigma_CCQETemplateReweight_SBN_v3_LFGToSF_q0bin4</allowlist>
+
+    <allowlist type="spline" tag="HF" plotname="Hartree Fock Bin 0">multisigma_CCQETemplateReweight_SBN_v3_LFGToHF_q0bin0</allowlist>
+    <allowlist type="spline" tag="HF" plotname="Hartree Fock Bin 1">multisigma_CCQETemplateReweight_SBN_v3_LFGToHF_q0bin1</allowlist>
+    <allowlist type="spline" tag="HF" plotname="Hartree Fock Bin 2">multisigma_CCQETemplateReweight_SBN_v3_LFGToHF_q0bin2</allowlist>
+    <allowlist type="spline" tag="HF" plotname="Hartree Fock Bin 3">multisigma_CCQETemplateReweight_SBN_v3_LFGToHF_q0bin3</allowlist>
+    <allowlist type="spline" tag="HF" plotname="Hartree Fock Bin 4">multisigma_CCQETemplateReweight_SBN_v3_LFGToHF_q0bin4</allowlist>
+
+    <allowlist type="spline" tag="CRPA" plotname="CRPA Bin 0">multisigma_CCQETemplateReweight_SBN_v3_HFToCRPA_q0bin0</allowlist>
+    <allowlist type="spline" tag="CRPA" plotname="CRPA Bin 1">multisigma_CCQETemplateReweight_SBN_v3_HFToCRPA_q0bin1</allowlist>
+    <allowlist type="spline" tag="CRPA" plotname="CRPA Bin 2">multisigma_CCQETemplateReweight_SBN_v3_HFToCRPA_q0bin2</allowlist>
+    <allowlist type="spline" tag="CRPA" plotname="CRPA Bin 3">multisigma_CCQETemplateReweight_SBN_v3_HFToCRPA_q0bin3</allowlist>
+    <allowlist type="spline" tag="CRPA" plotname="CRPA Bin 4">multisigma_CCQETemplateReweight_SBN_v3_HFToCRPA_q0bin4</allowlist>
+
+    <allowlist type="spline" tag="QEIntf" plotname="QEInterference Bin 0">multisigma_QEInterference_SBN_v3_QEIntf_dial_0</allowlist>
+    <allowlist type="spline" tag="QEIntf" plotname="QEInterference Bin 1">multisigma_QEInterference_SBN_v3_QEIntf_dial_1</allowlist>
+    <allowlist type="spline" tag="QEIntf" plotname="QEInterference Bin 2">multisigma_QEInterference_SBN_v3_QEIntf_dial_2</allowlist>
+    <allowlist type="spline" tag="QEIntf" plotname="QEInterference Bin 3">multisigma_QEInterference_SBN_v3_QEIntf_dial_3</allowlist>
+    <allowlist type="spline" tag="QEIntf" plotname="QEInterference Bin 4">multisigma_QEInterference_SBN_v3_QEIntf_dial_4</allowlist>
+    <allowlist type="spline" tag="QEIntf" plotname="QEInterference Bin 5">multisigma_QEInterference_SBN_v3_QEIntf_dial_5</allowlist>
+
+    <allowlist type="spline" tag="FSI" plotname="FrG4_N">multisigma_GENIEReWeight_SBN_v3_FrG4_N</allowlist>
+    <allowlist type="spline" tag="FSI" plotname="FrG4LoE_N">multisigma_GENIEReWeight_SBN_v3_FrG4LoE_N</allowlist>
+    <allowlist type="spline" tag="FSI" plotname="FrG4M1E_N">multisigma_GENIEReWeight_SBN_v3_FrG4M1E_N</allowlist>
+    <allowlist type="spline" tag="FSI" plotname="FrG4M2E_N">multisigma_GENIEReWeight_SBN_v3_FrG4M2E_N</allowlist>
+    <allowlist type="spline" tag="FSI" plotname="FrG4HiE_N">multisigma_GENIEReWeight_SBN_v3_FrG4HiE_N</allowlist>
+    <allowlist type="spline" tag="FSI" plotname="FrINCL_N">multisigma_GENIEReWeight_SBN_v3_FrINCL_N</allowlist>
+    <allowlist type="spline" tag="FSI" plotname="FrINCLLoE_N">multisigma_GENIEReWeight_SBN_v3_FrINCLLoE_N</allowlist>
+    <allowlist type="spline" tag="FSI" plotname="FrINCLM1_N">multisigma_GENIEReWeight_SBN_v3_FrINCLM1E_N</allowlist>
+    <allowlist type="spline" tag="FSI" plotname="FrINCLM2_N">multisigma_GENIEReWeight_SBN_v3_FrINCLM2E_N</allowlist>
+    <allowlist type="spline" tag="FSI" plotname="FrINCLHi_N">multisigma_GENIEReWeight_SBN_v3_FrINCLHiE_N</allowlist>
+    <allowlist type="spline" tag="FSI" plotname="MFPLoE_N">multisigma_GENIEReWeight_SBN_v3_MFPLoE_N</allowlist>
+    <allowlist type="spline" tag="FSI" plotname="MFPM1E_N">multisigma_GENIEReWeight_SBN_v3_MFPM1E_N</allowlist>
+    <allowlist type="spline" tag="FSI" plotname="MFPM2E_N">multisigma_GENIEReWeight_SBN_v3_MFPM2E_N</allowlist>
+    <allowlist type="spline" tag="FSI" plotname="MFPHiE_N">multisigma_GENIEReWeight_SBN_v3_MFPHiE_N</allowlist>
+    <allowlist type="spline" tag="FSI" plotname="FrKin_PiProFix_N">multisigma_GENIEReWeight_SBN_v3_FrKin_PiProFix_N</allowlist>
+    <allowlist type="spline" tag="FSI" plotname="FrKin_PiProBias_N">multisigma_GENIEReWeight_SBN_v3_FrKin_PiProBias_N</allowlist>
+    <!--<allowlist type="spline" tag="FSI" plotname="QuasiDeuteronFraction">multisigma_PionAbsWeighter_SBN_v3_QuasiDeuteronFraction</allowlist>-->
+    <allowlist type="spline" tag="AxialFF" plotname="ZExpPCA_b1">multisigma_ZExpPCAWeighter_SBN_v3_MvA_b1</allowlist>
+    <allowlist type="spline" tag="AxialFF" plotname="ZExpPCA_b2">multisigma_ZExpPCAWeighter_SBN_v3_MvA_b2</allowlist>
+    <allowlist type="spline" tag="AxialFF" plotname="ZExpPCA_b3">multisigma_ZExpPCAWeighter_SBN_v3_MvA_b3</allowlist>
+    <allowlist type="spline" tag="AxialFF" plotname="ZExpPCA_b4">multisigma_ZExpPCAWeighter_SBN_v3_MvA_b4</allowlist>
+
+    <allowlist type="spline" tag="MEC" plotname="NormCCMEC">GENIEReWeight_SBN_v1_multisigma_NormCCMEC</allowlist>
+    <allowlist type="spline" tag="MEC" plotname="NormNCMEC">GENIEReWeight_SBN_v1_multisigma_NormNCMEC</allowlist>
+    <allowlist type="spline" tag="MEC" plotname="DecayAngMEC">GENIEReWeight_SBN_v1_multisigma_DecayAngMEC</allowlist>
+
+    <allowlist type="spline" tag="RES" plotname="MaNCRES">GENIEReWeight_SBN_v1_multisigma_MaNCRES</allowlist>
+    <allowlist type="spline" tag="RES" plotname="MaCCRES">GENIEReWeight_SBN_v1_multisigma_MaCCRES</allowlist>
+    <allowlist type="spline" tag="RES" plotname="MvCCRES">GENIEReWeight_SBN_v1_multisigma_MvCCRES</allowlist>
+    <allowlist type="spline" tag="RES" plotname="MvNCRES">GENIEReWeight_SBN_v1_multisigma_MvNCRES</allowlist>
+    <allowlist type="spline" tag="RES" plotname="ThetaDelta2NRad">GENIEReWeight_SBN_v1_multisigma_ThetaDelta2NRad</allowlist>
+    <allowlist type="spline" tag="RES" plotname="ThetaDelta2Npi">GENIEReWeight_SBN_v1_multisigma_Theta_Delta2Npi</allowlist>
+    <!--<allowlist type="spline" tag="RES" plotname="RDecBR1eta">GENIEReWeight_SBN_v1_multisigma_RDecBR1eta</allowlist>
+    <allowlist type="spline" tag="RES" plotname="RDecBR1gamma">GENIEReWeight_SBN_v1_multisigma_RDecBR1gamma</allowlist>-->
+
+    <allowlist type="spline" tag="DIS" plotname="AhtBY">GENIEReWeight_SBN_v1_multisigma_AhtBY</allowlist>
+    <allowlist type="spline" tag="DIS" plotname="BhtBY">GENIEReWeight_SBN_v1_multisigma_BhtBY</allowlist>
+    <allowlist type="spline" tag="DIS" plotname="CV1uBY">GENIEReWeight_SBN_v1_multisigma_CV1uBY</allowlist>
+    <allowlist type="spline" tag="DIS" plotname="CV2uBY">GENIEReWeight_SBN_v1_multisigma_CV2uBY</allowlist>
+
+    <allowlist type="spline" tag="COH" plotname="CCCOH">GENIEReWeight_SBN_v1_multisigma_NormCCCOH</allowlist>
+    <allowlist type="spline" tag="COH" plotname="NCCOH">GENIEReWeight_SBN_v1_multisigma_NormNCCOH</allowlist>
+
+    <allowlist type="spline" tag="NCEL" plotname="MaNCEL">GENIEReWeight_SBN_v1_multisigma_MaNCEL</allowlist>
+    <allowlist type="spline" tag="NCEL" plotname="EtaNCEL">GENIEReWeight_SBN_v1_multisigma_EtaNCEL</allowlist>
+
+    <allowlist type="spline" tag="FSI" plotname="MFP_pi">GENIEReWeight_SBN_v1_multisigma_MFP_pi</allowlist>
+    <allowlist type="spline" tag="FSI" plotname="FrAbs_pi">GENIEReWeight_SBN_v1_multisigma_FrAbs_pi</allowlist>
+    <allowlist type="spline" tag="FSI" plotname="FrInel_pi">GENIEReWeight_SBN_v1_multisigma_FrInel_pi</allowlist>
+    <allowlist type="spline" tag="FSI" plotname="FrCEx_pi">GENIEReWeight_SBN_v1_multisigma_FrCEx_pi</allowlist>
+    <allowlist type="spline" tag="FSI" plotname="FrPiProd_pi">GENIEReWeight_SBN_v1_multisigma_FrPiProd_pi</allowlist>
+
+    <allowlist type="spline" tag="MEC" plotname="MEC Valencia Bin 0">multisigma_MECq0q3InterpWeighting_SBN_v3_SuSAToVal_MECResponse_q0bin0</allowlist>
+    <allowlist type="spline" tag="MEC" plotname="MEC Valencia Bin 1">multisigma_MECq0q3InterpWeighting_SBN_v3_SuSAToVal_MECResponse_q0bin1</allowlist>
+    <allowlist type="spline" tag="MEC" plotname="MEC Valencia Bin 2">multisigma_MECq0q3InterpWeighting_SBN_v3_SuSAToVal_MECResponse_q0bin2</allowlist>
+    <allowlist type="spline" tag="MEC" plotname="MEC Valencia Bin 3">multisigma_MECq0q3InterpWeighting_SBN_v3_SuSAToVal_MECResponse_q0bin3</allowlist>
+    <allowlist type="spline" tag="MEC" plotname="MEC Martini Bin 0">multisigma_MECq0q3InterpWeighting_SBN_v3_SuSAToMar_MECResponse_q0bin0</allowlist>
+    <allowlist type="spline" tag="MEC" plotname="MEC Martini Bin 1">multisigma_MECq0q3InterpWeighting_SBN_v3_SuSAToMar_MECResponse_q0bin1</allowlist>
+    <allowlist type="spline" tag="MEC" plotname="MEC Martini Bin 2">multisigma_MECq0q3InterpWeighting_SBN_v3_SuSAToMar_MECResponse_q0bin2</allowlist>
+    <allowlist type="spline" tag="MEC" plotname="MEC Martini Bin 3">multisigma_MECq0q3InterpWeighting_SBN_v3_SuSAToMar_MECResponse_q0bin3</allowlist>
+    <allowlist type="spline" tag="CCQE" plotname="CoulombCCQE">GENIEReWeight_SBN_v1_multisigma_CoulombCCQE</allowlist>
+    <allowlist type="spline" tag="CCQE" plotname="VecFFCCQEshape">GENIEReWeight_SBN_v1_multisigma_VecFFCCQEshape</allowlist>
+    <allowlist type="spline" tag="POT" plotname="POT ICARUS Run2">multisigma_ICARUSRun2_POT</allowlist>
+    <allowlist type="spline" tag="POT" plotname="POT ICARUS Run4">multisigma_ICARUSRun4_POT</allowlist>
+    <allowlist type="spline" tag="POT" plotname="POT SBND">multisigma_SBND_POT</allowlist>
+    <allowlist type="spline" tag="Det" plotname="SCE">SCE_SBND_multisigma_SCE</allowlist>
+    <allowlist type="spline" tag="Det" plotname="SBNDSmear">multisigma_SBND_PID_Smear</allowlist>
+    <allowlist type="spline" tag="Det" plotname="SBNDGain">multisigma_SBND_PID_Gain</allowlist>
+    <allowlist type="spline" tag="Det" plotname="ICARUSRun2Smear">multisigma_ICARUSRun2_PID_Smear</allowlist>
+    <allowlist type="spline" tag="Det" plotname="ICARUSRun2Gain">multisigma_ICARUSRun2_PID_Gain</allowlist>
+    <allowlist type="spline" tag="Det" plotname="ICARUSRun4Smear">multisigma_ICARUSRun4_PID_Smear</allowlist>
+    <allowlist type="spline" tag="Det" plotname="ICARUSRun4Gain">multisigma_ICARUSRun4_PID_Gain</allowlist>
+    <allowlist type="spline" tag="Det" plotname="SBNDSmear">multisigma_SBND_PID_Smear</allowlist>
+    <allowlist type="spline" tag="Det" plotname="SBNDGain">multisigma_SBND_PID_Gain</allowlist>
+    <allowlist type="spline" tag="Det" plotname="XThetaXW">WireMod_SBND_multisigma_WMXThetaXW</allowlist>
+    <allowlist type="spline" tag="Det" plotname="YZ">WireMod_SBND_multisigma_WMYZ</allowlist>-->
+    <allowlist type="covariance_to_spline" tag="Flux" plotname="nucleoninexsec">nucleoninexsec_Flux</allowlist>
+    <allowlist type="covariance_to_spline" tag="Flux" plotname="kminus">kminus_Flux</allowlist>
+    <allowlist type="covariance_to_spline" tag="Flux" plotname="kzero">kzero_Flux</allowlist>
+    <allowlist type="covariance_to_spline" tag="Flux" plotname="piontotxsec">piontotxsec_Flux</allowlist>
+    <allowlist type="covariance_to_spline" tag="Flux" plotname="horncurrent">horncurrent_Flux</allowlist>
+    <allowlist type="covariance_to_spline" tag="Flux" plotname="piplus">piplus_Flux</allowlist>
+    <allowlist type="covariance_to_spline" tag="Flux" plotname="piminus">piminus_Flux</allowlist>
+    <allowlist type="covariance_to_spline" tag="Flux" plotname="pioninexsec">pioninexsec_Flux</allowlist>
+    <allowlist type="covariance_to_spline" tag="Flux" plotname="pionqexsec">pionqexsec_Flux</allowlist>
+    <allowlist type="covariance_to_spline" tag="Flux" plotname="kplus">kplus_Flux</allowlist>
+    <allowlist type="covariance_to_spline" tag="Flux" plotname="nucleontotxsec">nucleontotxsec_Flux</allowlist>
+    <allowlist type="covariance_to_spline" tag="Flux" plotname="nucleonqexsec">nucleonqexsec_Flux</allowlist>
+    <allowlist type="covariance_to_spline" tag="Flux" plotname="expskin">expskin_Flux</allowlist>
+</variation_list>
+
+<MCFile treename="SelectedEvents" filename="/scratch/nrowe/new_processing/SBND_SpringMC_rewgt_B_*sbruce.root" scale = "1.0" pot="5.616e20">
+    <friend treename="multisigmaTree" />
+    <friend treename="multisimTree" />
+    <branch
+        associated_subchannel = "nu_SBND_numu_cc"
+        model_rule            = "1"
+        additional_weight     = "(!true_isnc)*(true_pdg == 14 || true_pdg == -14)*cvwgt"
+        >
+        <variable2D>nu_E_calo;del_p</variable2D>
+        <variable>baseline/(nu_E_true*1000.0)</variable>
+    </branch>
+    <branch
+        associated_subchannel = "nu_SBND_numu_numunc"
+        model_rule            = "1"
+        additional_weight     = "(true_isnc == 1)*(true_pdg == 14 || true_pdg == -14)*cvwgt"
+        >
+        <variable2D>nu_E_calo;del_p</variable2D>
+	<variable>baseline/(nu_E_true*1000.0)</variable>
+    </branch>
+
+    <branch
+        associated_subchannel = "nu_SBND_numu_othernc"
+        model_rule            = "0"
+        additional_weight     = "(true_isnc == 1)*(true_pdg != 14 & true_pdg != -14)*cvwgt"
+        >
+        <variable2D>nu_E_calo;del_p</variable2D>
+	<variable>baseline/(nu_E_true*1000.0)</variable>
+    </branch>
+    <branch
+        associated_subchannel = "nu_SBND_numu_bkg"
+        model_rule            = "0"
+        additional_weight     = "(!((true_isnc != 1)*(true_pdg == 14 || true_pdg == -14)) & !(true_isnc == 1))*cvwgt"
+        >
+        <variable2D>nu_E_calo;del_p</variable2D>
+	<variable>1.0</variable>
+    </branch>
+</MCFile>
+
+<MCFile treename="SelectedEvents" filename="/scratch/nrowe/new_processing/SBND_SpringBNBOffData_5000_sbruce.root" scale = "1.0" pot="5.66e19">
+    <branch
+        associated_subchannel = "nu_SBND_numu_intime"
+        model_rule            = "0"
+        incl_systematics      = "false"
+        >
+        <variable2D>nu_E_calo;del_p</variable2D>
+	<variable>1.0</variable>
+    </branch>
+</MCFile>
+
+<MCFile treename="SelectedEvents" filename="/scratch/nrowe/new_processing/SBND_SpringLowEMC_sbruce.root" scale = "0.647" pot="1.81e20">
+    <branch
+        associated_subchannel = "nu_SBND_numu_dirt"
+        model_rule            = "0"
+        incl_systematics      = "false"
+        >
+        <variable2D>nu_E_calo;del_p</variable2D>
+	<variable>1.0</variable>
+    </branch>
+</MCFile>
+
+<MCFile treename="SelectedEvents" filename="/scratch/nrowe/new_processing/ICARUS_SpringMCOverlay_rewgt_B_sbruce.root" scale = "1.0" pot="4.85e20">
+    <friend treename="multisigmaTree" />
+    <friend treename="multisimTree" />
+    <branch
+        associated_subchannel = "nu_ICARUSRun2_numu_cc"
+        model_rule            = "1"
+        additional_weight     = "(!true_isnc)*(true_pdg == 14 || true_pdg == -14)*cvwgt"
+        >
+        <variable2D>nu_E_calo;del_p</variable2D>
+        <variable>baseline/(nu_E_true*1000.0)</variable>
+    </branch>
+    <branch
+        associated_subchannel = "nu_ICARUSRun2_numu_numunc"
+        model_rule            = "1"
+        additional_weight     = "(true_isnc == 1)*(true_pdg == 14 || true_pdg == -14)*cvwgt"
+        >
+        <variable2D>nu_E_calo;del_p</variable2D>
+	<variable>baseline/(nu_E_true*1000.0)</variable>
+    </branch>
+
+    <branch
+        associated_subchannel = "nu_ICARUSRun2_numu_othernc"
+        model_rule            = "0"
+        additional_weight     = "(true_isnc == 1)*(true_pdg != 14 & true_pdg != -14)*cvwgt"
+        >
+        <variable2D>nu_E_calo;del_p</variable2D>
+	<variable>baseline/(nu_E_true*1000.0)</variable>
+    </branch>
+    <branch
+        associated_subchannel = "nu_ICARUSRun2_numu_bkg"
+        model_rule            = "0"
+        additional_weight     = "(true_pdg != -14 && true_pdg != 14)*cvwgt"
+        >
+        <variable2D>nu_E_calo;del_p</variable2D>
+	<variable>1.0</variable>
+    </branch>
+
+</MCFile>
+
+<MCFile treename="SelectedEvents" filename="/scratch/nrowe/new_processing/ICARUS_SpringRun2BNBOff_unblind_prescaled_sbruce.root" scale = "1.0" pot="1.8e19">
+    <branch
+        associated_subchannel = "nu_ICARUSRun2_numu_intime"
+        model_rule            = "0"
+        incl_systematics      = "false"
+        >
+        <variable2D>nu_E_calo;del_p</variable2D>
+	<variable>1.0</variable>
+    </branch>
+</MCFile>
+
+<MCFile treename="SelectedEvents" filename="/scratch/nrowe/new_processing/ICARUS_Spring_Overlay_Dirt_lowE_sbruce.root" scale = "0.615" pot="5.7e19">
+    <branch
+        associated_subchannel = "nu_ICARUSRun2_numu_dirt"
+        model_rule            = "0"
+        incl_systematics      = "false"
+        >
+        <variable2D>nu_E_calo;del_p</variable2D>
+	<variable>1.0</variable>
+    </branch>
+</MCFile>
+
+
+<MCFile treename="SelectedEvents" filename="/scratch/nrowe/new_processing/ICARUSRun4_SpringMCOverlay_rewgt_B_*_sbruce.root" scale = "1.0" pot="1.85e21">
+    <friend treename="multisigmaTree" />
+    <friend treename="multisimTree" />
+    <branch
+        associated_subchannel = "nu_ICARUSRun4_numu_cc"
+        model_rule            = "1"
+        additional_weight     = "(!true_isnc)*(true_pdg == 14 || true_pdg == -14)*cvwgt"
+        >
+        <variable2D>nu_E_calo;del_p</variable2D>
+        <variable>baseline/(nu_E_true*1000.0)</variable>
+    </branch>
+    <branch
+        associated_subchannel = "nu_ICARUSRun4_numu_numunc"
+        model_rule            = "1"
+        additional_weight     = "(true_isnc == 1)*(true_pdg == 14 || true_pdg == -14)*cvwgt"
+        >
+        <variable2D>nu_E_calo;del_p</variable2D>
+	<variable>baseline/(nu_E_true*1000.0)</variable>
+    </branch>
+    <branch
+        associated_subchannel = "nu_ICARUSRun4_numu_othernc"
+        model_rule            = "0"
+        additional_weight     = "(true_isnc == 1)*(true_pdg != 14 & true_pdg != -14)*cvwgt"
+        >
+        <variable2D>nu_E_calo;del_p</variable2D>
+	<variable>baseline/(nu_E_true*1000.0)</variable>
+    </branch>    <branch
+        associated_subchannel = "nu_ICARUSRun4_numu_bkg"
+        model_rule            = "0"
+        additional_weight     = "(true_pdg != -14 && true_pdg != 14)*cvwgt"
+        >
+        <variable2D>nu_E_calo;del_p</variable2D>
+	<variable>1.0</variable>
+    </branch>
+</MCFile>
+
+<MCFile treename="SelectedEvents" filename="/scratch/nrowe/new_processing/ICARUS_SpringRun4BNBOff_unblind_prescaled_sbruce.root" scale = "1.0" pot="1.147e19">
+    <branch
+        associated_subchannel = "nu_ICARUSRun4_numu_intime"
+        model_rule            = "0"
+        incl_systematics      = "false"
+        >
+        <variable2D>nu_E_calo;del_p</variable2D>
+	<variable>1.0</variable>
+    </branch>
+</MCFile>
+
+<MCFile treename="SelectedEvents" filename="/scratch/nrowe/new_processing/ICARUSRun4_Spring_Overlay_Dirt_lowE_sbruce.root" scale = "0.361" pot="3.125e19">
+    <branch
+        associated_subchannel = "nu_ICARUSRun4_numu_dirt"
+        model_rule            = "0"
+        incl_systematics      = "false"
+        >
+        <variable2D>nu_E_calo;del_p</variable2D>
+	<variable>1.0</variable>
+    </branch>
+</MCFile>
+
+<correlation>multisigma_SBND_POT multisigma_ICARUSRun4_POT 0.33</correlation>
