@@ -381,7 +381,7 @@ def muNp0pi_pipeline(df, muon_pid_cut, proton_pid_cut, muon_min_len_cut, muon_ma
 #            df[col] = df[col].groupby(level=[0, 1, 2]).transform('sum')
 #######################################################
     df = all_fv_cuts(df, det)
-    df = chi2_pid_correction(df)
+    #df = chi2_pid_correction(df)
     df = particle_classification(df, muon_pid_cut, proton_pid_cut, muon_min_len_cut, muon_max_len_cut)
     df = muNp0pi_selection(df)
     df = get_nuE_reco(df)
